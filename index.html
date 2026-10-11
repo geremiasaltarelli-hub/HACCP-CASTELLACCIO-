@@ -56,7 +56,7 @@ function boot(){let f='';try{f=JSON.parse(localStorage.getItem(LS)||'{}').f||''}
 function go(id){V.id=id;render();scrollTo(0,0)}
 function render(){
  const r=R.find(x=>x.id===V.id);$('#bk').hidden=!r;$('#ti').textContent=r?(r.doc?'DOC '+r.doc+' · ':'')+r.t:'HACCP · Il Castellaccio';
- if(!r)$('#app').innerHTML='<p>Scegli il registro da compilare.</p>'+R.map(x=>`<button class="row" onclick="go('${x.id}')"><b>${x.doc?'DOC '+x.doc:'Stagionati'}</b>${E(x.t)}</button>`).join('');
+ if(!r)$('#app').innerHTML='<p>Scegli il registro da compilare.</p>'+R.map(x=>`<button class="row" onclick="go('${x.id}')"><b>${x.doc?'DOC '+x.doc:'Stagionati'}</b>${E(x.t)}</button>`).join('')+'<button class="b o" onclick="shareApp()">Condividi app</button>';
  else r.k==='g'?gridView(r):listView(r)}
 const rec=(id=V.id)=>((S.g[id]||{})[V.m]||{})[V.d]||{};
 const bad=(k,v)=>v!==undefined&&v!==''&&!isNaN(v)&&(k==='FR1'?+v>-15:+v>6);
@@ -140,6 +140,9 @@ async function dl(id){
  const r=R.find(x=>x.id===id),s=sheet(r);
  try{const d=await claude.use('downloads');if(!d)throw 0;await d.save({filename:`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.html`,data:`<!doctype html><meta charset="utf-8"><title>${E(r.t)}</title><style>${PCSS}@page{size:A4 ${s.o};margin:8mm}body{margin:0}</style>${s.h}`});msg('Apri il file e stampa dal browser')}
  catch(e){msg('Download non disponibile qui')}}
+function shareApp(){const u=location.href.split('#')[0],t='App HACCP Il Castellaccio: apri il link, accedi con email e password e installala dal menu del browser.';
+ if(navigator.share)navigator.share({title:'HACCP Il Castellaccio',text:t,url:u}).catch(()=>{});
+ else window.open('https://wa.me/?text='+encodeURIComponent(t+' '+u),'_blank')}
 boot();
 </script><script>
 window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;a.click()}}:null};
