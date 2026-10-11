@@ -1,3 +1,4 @@
+// Configurazione Firebase del progetto haccp-castellaccio
 export default {
   apiKey: "AIzaSyBSUvUMnuM7X-JXQ7M5lMztK21MTghE9KI",
   authDomain: "haccp-castellaccio.firebaseapp.com",

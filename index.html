@@ -22,6 +22,7 @@ input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-wei
 .ck{display:flex;gap:10px;align-items:center;color:var(--fg);font-size:15px;margin:0 0 6px;min-height:36px}.ck input{width:22px;min-height:22px;margin:0}
 .it{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
 .x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
+.ing{display:grid;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 8px;background:var(--card)}.ing input,.ing select{margin-top:0}.ing .x{justify-self:end}
 .warn{background:var(--wb);color:var(--bad);border-radius:8px;padding:10px;margin:0 0 10px}.warn:empty{display:none}.warn .b{margin-top:8px;background:var(--bad);border-color:var(--bad)}
 .st{text-align:center;color:var(--mut);font-size:12px}.msg{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;display:none}
 h2{font-size:15px;margin:18px 0 6px}
@@ -45,7 +46,7 @@ const R=[
 {id:'man',k:'l',doc:'04',t:'Registro manutenzione locali, attrezzature, impianti',o:'p',n:16,g:'In caso di manutenzione di locali, attrezzature, impianti, registrare e descrivere il tipo di intervento effettuato e firmare a garanzia di quanto riportato.',f:[['d','Data','d'],['l','Locale / attrezzature / impianti'],['i','Descrizione intervento'],['s','Firma']]},
 {id:'lot',k:'l',doc:'05',t:'Registro lotti prodotti in ingresso',o:'l',n:12,g:'Compilare ad ogni ricevimento merce. Se il prodotto non è conforme, compilare anche il Registro delle non conformità.',f:[['d','Data ricevimento','d'],['p','Prodotto'],['fo','Fornitore'],['b','DDT / fattura n.'],['l','Lotto fornitore'],['sc','Scadenza','d'],['t','Temp. (°C)','n'],['c','Conforme (C/NC)','c'],['s','Firma']]},
 {id:'abb',k:'l',doc:'06',t:'Registro delle operazioni di abbattimento',o:'l',n:12,f:[['d','Data','d'],['q','Quantità'],['p','Denominazione prodotto/semilavorato sottoposto ad abbattimento'],['t','Temperatura utilizzata (°C)','n'],['m','Tempo impiegato'],['ds','Data somministrazione','d'],['s','Firma']]},
-{id:'prod',k:'l',doc:'07',t:'Registro produzioni',o:'l',n:10,f:[['d','Data di produzione','d'],['p','Denominazione prodotto'],['i','Ingredienti','t','*'],['e','Estremi identificativi degli ingredienti impiegati'],['l','Lotto attribuito'],['s','Firma operatore o delegato']]},
+{id:'prod',k:'l',doc:'07',t:'Registro produzioni',o:'l',n:10,f:[['d','Data di produzione','d'],['p','Denominazione prodotto'],['i','Ingredienti'],['e','Estremi identificativi degli ingredienti impiegati'],['l','Lotto attribuito'],['s','Firma operatore o delegato']]},
 {id:'stag',k:'l',doc:'',t:'Registro produzioni – Stagionati',o:'l',n:10,g:'Compilare ad ogni produzione, attribuire un lotto interno. Per ogni materia prima indicare ditta, fattura n./data e lotto fornitore.',f:[['d','Data','d'],['q','Quantità'],['l','Lotto attribuito'],['c','Riferimenti carne','t','carne'],['b','Riferimenti budello','t','budello'],['pe','Riferimenti pepe','t','pepe'],['sa','Riferimenti sale','t','sale'],['s','Firma operatore']]}
 ];
 let S={r:{},g:{},f:''},ref=null,V={id:null,m:TD.slice(0,7),d:TD.slice(8)},pre={};
@@ -72,7 +73,7 @@ function pickp(k,el){const x=S.r.lot[el.value];if(!x)return;const j=(o,t)=>o.val
 function ex(i){const x=S.r.lot[i];x.ex=x.ex?'':1;save();render()}
 function add(id){
  const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());
- const miss=[...document.querySelectorAll('#rcl select')].filter(e=>!e.value).map(e=>e.dataset.g);
+ const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&!r.querySelector('select').value).map(r=>r.querySelector('input').value.trim());
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
  if(o.s)S.f=o.s;(S.r[id]=S.r[id]||[]).push(o);save();
@@ -114,17 +115,20 @@ function sheet(r){
  return{o,h}}
 const rco=()=>'<option value="">Nessuna (inserimento manuale)</option>'+(S.rc||[]).map((x,i)=>`<option value="${i}">${E(x.n)}</option>`).join('');
 const rcm=()=>(S.rc||[]).map((x,i)=>`<div class="it"><span><b>${E(x.n)}</b> – ${E(x.ing.join(', '))}</span><button class="x" onclick="rdel(${i},this)">Elimina</button></div>`).join('');
-const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><div id="rcl"></div>`;
+const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><h2>Ingredienti e lotti</h2><div id="rcl">${ing('')}</div><button class="b o" onclick="addIng('')">+ Aggiungi ingrediente</button>`;
 const rc2=()=>`<button class="b o" onclick="rsv()">Salva come ricetta</button><h2>Ricette salvate</h2><div id="rl">${rcm()||'<p class="st">Nessuna ricetta: scrivi prodotto e ingredienti (separati da virgola) e premi "Salva come ricetta".</p>'}</div>`;
 function rref(){$('#rc').innerHTML=rco();$('#rl').innerHTML=rcm()}
 function rsv(){const n=$('#f_p').value.trim(),g=$('#f_i').value.split(/[;,\n]/).map(t=>t.trim()).filter(Boolean);
  if(!n||!g.length)return msg('Scrivi prodotto e ingredienti');
  S.rc=S.rc||[];const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()),q={n,ing:g};k<0?S.rc.push(q):S.rc[k]=q;save();rref();msg('Ricetta salvata')}
 function rdel(i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.rc.splice(i,1);save();rref();$('#rcl').innerHTML=''}
-function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML='';return}
- $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>`<label>${E(g)}<select data-g="${E(g)}" onchange="rcu()">${lopt(g.toLowerCase())}</select></label>`).join('');rcu()}
-function rcu(){const s=[...document.querySelectorAll('#rcl select')];$('#f_i').value=s.map(e=>e.dataset.g).join(', ');
- $('#f_e').value=s.filter(e=>e.value).map(e=>{const x=S.r.lot[e.value];return`${e.dataset.g}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`}).join('; ')}
+const ing=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}" onchange="rowf(this)" oninput="rcu()"><select onchange="rcu()">${lopt(String(n).toLowerCase())}</select><button class="x" onclick="this.parentNode.remove();rcu()">Togli</button></div>`;
+function addIng(n){$('#rcl').insertAdjacentHTML('beforeend',ing(n))}
+function rowf(el){el.nextElementSibling.innerHTML=lopt(el.value.trim().toLowerCase());rcu()}
+function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
+ $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>ing(g)).join('');rcu()}
+function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,x=v?S.r.lot[v]:null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`)});
+ $('#f_i').value=nm.join(', ');$('#f_e').value=es.join('; ')}
 let LB={i:0,n:1,f:'a'};
 function lbh(){const x=S.r.prod[LB.i],c=`<div class="lb"><b>${E(x.p)||'Prodotto'}</b><span>Lotto: ${E(x.l)}</span><span>Data: ${fmt(x.d)}</span></div>`,n=Math.max(1,Math.min(99,+LB.n||1));
  if(LB.f==='s')return{o:'70mm 37mm',m:'0',h:Array(n).fill(`<div class="lw">${c}</div>`).join('')};
@@ -165,7 +169,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 const app=initializeApp(cfg),auth=getAuth(app),db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
 const cl=o=>JSON.parse(JSON.stringify(o)),uid=()=>Date.now().toString(36).padStart(9,'0')+Math.random().toString(36).slice(2,5);
 let P={r:{},g:{},rc:[]};
-const ui=()=>{if(!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))render()};
+const ui=()=>{const d=[...document.querySelectorAll('#app input[id^="f_"],#rcl input')].some(e=>e.type!=='date'&&e.value&&e.id!=='f_s');if(!d&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))render()};
 function start(){
  onSnapshot(collection(db,'rows'),s=>{s.docs.forEach(d=>{S.r[d.id]=Object.values(d.data().m||{}).sort((a,b)=>a._id<b._id?-1:1)});P.r=cl(S.r);ui()});
  onSnapshot(collection(db,'g'),s=>{s.docs.forEach(d=>{const[i,m]=d.id.split('_');(S.g[i]=S.g[i]||{})[m]=d.data().d||{}});P.g=cl(S.g);ui()});
