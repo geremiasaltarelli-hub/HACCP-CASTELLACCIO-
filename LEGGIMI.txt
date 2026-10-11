@@ -1,0 +1,37 @@
+APP HACCP IL CASTELLACCIO - INSTALLAZIONE (circa 30 minuti, una sola volta)
+I nomi dei menu di Firebase e GitHub possono cambiare leggermente.
+
+1) FIREBASE (gratuito) - console.firebase.google.com
+   - Crea un progetto (puoi disattivare Google Analytics).
+   - Authentication > Inizia > Email/password > Abilita.
+   - Authentication > Utenti > Aggiungi utente: scegli una email e una password.
+     Sono le credenziali che userete tutti per entrare nell'app.
+   - Authentication > Impostazioni > Azioni utente: se trovi l'opzione per
+     consentire la creazione di account (sign-up), disattivala.
+   - Firestore Database > Crea database > modalita' produzione.
+   - Firestore > Regole: incolla il testo qui sotto e premi Pubblica.
+
+     rules_version = '2';
+     service cloud.firestore {
+       match /databases/{database}/documents {
+         match /{document=**} { allow read, write: if request.auth != null; }
+       }
+     }
+
+   - Impostazioni progetto (ingranaggio) > Le tue app > aggiungi app Web (</>).
+     Copia i valori apiKey, authDomain, projectId, appId e incollali
+     nel file firebase-config.js (al posto di INCOLLA_QUI).
+
+2) PUBBLICAZIONE SU GITHUB PAGES
+   - Crea un repository su GitHub e carica TUTTI i file di questa cartella
+     (index.html, firebase-config.js, manifest.webmanifest, sw.js, le due icone).
+   - Settings > Pages > Branch main > Save. Dopo un minuto avrai un indirizzo
+     tipo https://tuonome.github.io/nome-repository/
+
+3) SUI TELEFONI
+   - Apri l'indirizzo con Chrome, accedi con email e password.
+   - Menu del browser > "Installa app" / "Aggiungi a schermata Home".
+   - Da quel momento si apre come una normale app, con i dati condivisi.
+
+Se cambi i file in futuro, cambia il numero in sw.js (haccp-v1 > haccp-v2)
+cosi' i telefoni scaricano la versione nuova.

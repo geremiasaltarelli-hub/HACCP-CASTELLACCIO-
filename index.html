@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HACCP · Il Castellaccio</title>
+<style>
+:root{--bg:#f3f5f8;--fg:#17202e;--mut:#5b6778;--card:#fff;--line:#d3dae3;--ac:#1f3b63;--on:#fff;--bad:#c0392b;--wb:#fdeceb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151d;--fg:#e8edf3;--mut:#9aa7b8;--card:#19212d;--line:#2d3a4b;--ac:#8db4ee;--on:#0b1220;--bad:#ff8a7b;--wb:#3a1d1d}}
+:root[data-theme="dark"]{--bg:#10151d;--fg:#e8edf3;--mut:#9aa7b8;--card:#19212d;--line:#2d3a4b;--ac:#8db4ee;--on:#0b1220;--bad:#ff8a7b;--wb:#3a1d1d}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 "Avenir Next","Segoe UI",system-ui,sans-serif}
+.top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--ac);color:var(--on);padding:10px 14px;z-index:5}
+.top h1{margin:0;font-size:17px;font-weight:650}.bk{background:none;border:0;color:var(--on);font:inherit;padding:0 0 4px;min-height:32px}.bk[hidden]{display:none}
+main{max-width:720px;margin:0 auto;padding:12px 14px 40px}
+.row{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0 0 8px;color:var(--fg);font:inherit;min-height:48px}
+.row b{display:inline-block;min-width:68px;color:var(--ac)}
+label{display:block;font-size:13px;color:var(--mut);margin:0 0 10px}
+input,select{display:block;width:100%;min-height:44px;margin-top:3px;padding:8px 10px;font:16px inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:6px}
+input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-weight:700}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.b{min-height:46px;padding:0 16px;border:1px solid var(--ac);border-radius:8px;background:var(--ac);color:var(--on);font:600 16px inherit;margin:4px 8px 4px 0}
+.b.o{background:none;color:var(--ac)}
+.ck{display:flex;gap:10px;align-items:center;color:var(--fg);font-size:15px;margin:0 0 6px;min-height:36px}.ck input{width:22px;min-height:22px;margin:0}
+.it{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
+.x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
+.warn{background:var(--wb);color:var(--bad);border-radius:8px;padding:10px;margin:0 0 10px}.warn:empty{display:none}.warn .b{margin-top:8px;background:var(--bad);border-color:var(--bad)}
+.st{text-align:center;color:var(--mut);font-size:12px}.msg{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;display:none}
+h2{font-size:15px;margin:18px 0 6px}
+#pr{display:none}
+#vw{position:fixed;inset:0;z-index:9;overflow:auto;background:var(--bg);padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px))}#vw[hidden]{display:none}#vw .pg{min-width:680px;margin:10px 0;padding:6px}
+@media print{body>*:not(#pr){display:none!important}#pr{display:block}body{background:#fff}}
+</style><style id="pg"></style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1f3b63"><link rel="apple-touch-icon" href="icon-192.png"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script></head>
+<body>
+<div class="top"><button id="bk" class="bk" onclick="go(null)" hidden>‹ Tutti i registri</button><h1 id="ti">HACCP · Il Castellaccio</h1></div>
+<main id="app"></main><p id="st" class="st"></p><div id="msg" class="msg"></div><div id="pr"></div><div id="vw" hidden></div>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),pad=n=>String(n).padStart(2,'0');
+const N=new Date(),TD=`${N.getFullYear()}-${pad(N.getMonth()+1)}-${pad(N.getDate())}`,fmt=d=>d?d.split('-').reverse().join('/'):'';
+const MES=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const TK=['F1','F2','F3','F4','F5','F6','F7','FR1'];
+const AR=['Piani di lavoro, lavelli, tavoli, taglieri','Pavimenti','Piccoli utensili e stoviglie, loro custodie e dispense','Servizi igienici','Affettatrice, robot','Forni, braciere','Cappe','Frigoriferi e freezer, abbattitore','Portarifiuti','Tritacarne, sfogliatrice','Ripiani e scaffali','Porte e finestre'];
+const R=[
+{id:'temp',k:'g',doc:'01',t:'Registro delle temperature',o:'p',g:'Una volta al giorno, verificare che le temperature degli impianti siano ottimali, e registrare la temperatura rilevata. In caso di non conformità, compilare il Registro delle non conformità e provvedere al ripristino della funzionalità come da procedura.'},
+{id:'san',k:'g',doc:'02',t:'Registro sanificazioni',o:'l'},
+{id:'nc',k:'l',doc:'03',t:'Registro delle non conformità',o:'p',n:16,g:'Il registro delle non conformità si compila solo in caso di anomalie. Si riporta l\'anomalia riscontrata e le azioni correttive intraprese.',f:[['d','Data','d'],['p','Prodotto'],['fo','Fornitore'],['a','Descrizione anomalia'],['z','Azione correttiva (scarto, reso o altro)']]},
+{id:'man',k:'l',doc:'04',t:'Registro manutenzione locali, attrezzature, impianti',o:'p',n:16,g:'In caso di manutenzione di locali, attrezzature, impianti, registrare e descrivere il tipo di intervento effettuato e firmare a garanzia di quanto riportato.',f:[['d','Data','d'],['l','Locale / attrezzature / impianti'],['i','Descrizione intervento'],['s','Firma']]},
+{id:'lot',k:'l',doc:'05',t:'Registro lotti prodotti in ingresso',o:'l',n:12,g:'Compilare ad ogni ricevimento merce. Se il prodotto non è conforme, compilare anche il Registro delle non conformità.',f:[['d','Data ricevimento','d'],['p','Prodotto'],['fo','Fornitore'],['b','DDT / fattura n.'],['l','Lotto fornitore'],['sc','Scadenza','d'],['t','Temp. (°C)','n'],['c','Conforme (C/NC)','c'],['s','Firma']]},
+{id:'abb',k:'l',doc:'06',t:'Registro delle operazioni di abbattimento',o:'l',n:12,f:[['d','Data','d'],['q','Quantità'],['p','Denominazione prodotto/semilavorato sottoposto ad abbattimento'],['t','Temperatura utilizzata (°C)','n'],['m','Tempo impiegato'],['ds','Data somministrazione','d'],['s','Firma']]},
+{id:'prod',k:'l',doc:'07',t:'Registro produzioni',o:'l',n:10,f:[['d','Data di produzione','d'],['p','Denominazione prodotto'],['i','Ingredienti','t','*'],['e','Estremi identificativi degli ingredienti impiegati'],['l','Lotto attribuito'],['s','Firma operatore o delegato']]},
+{id:'stag',k:'l',doc:'',t:'Registro produzioni – Stagionati',o:'l',n:10,g:'Compilare ad ogni produzione, attribuire un lotto interno. Per ogni materia prima indicare ditta, fattura n./data e lotto fornitore.',f:[['d','Data','d'],['q','Quantità'],['l','Lotto attribuito'],['c','Riferimenti carne','t','carne'],['b','Riferimenti budello','t','budello'],['pe','Riferimenti pepe','t','pepe'],['sa','Riferimenti sale','t','sale'],['s','Firma operatore']]}
+];
+let S={r:{},g:{},f:''},ref=null,V={id:null,m:TD.slice(0,7),d:TD.slice(8)},pre={};
+const LS='haccp-castellaccio';
+function save(){try{localStorage.setItem(LS,JSON.stringify({f:S.f}))}catch(e){}window.push&&push()}
+function msg(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(()=>m.style.display='none',2500)}
+function boot(){let f='';try{f=JSON.parse(localStorage.getItem(LS)||'{}').f||''}catch(e){}S={r:{},g:{},f,rc:[]};$('#app').innerHTML='<p class="st">Caricamento…</p>'}
+function go(id){V.id=id;render();scrollTo(0,0)}
+function render(){
+ const r=R.find(x=>x.id===V.id);$('#bk').hidden=!r;$('#ti').textContent=r?(r.doc?'DOC '+r.doc+' · ':'')+r.t:'HACCP · Il Castellaccio';
+ if(!r)$('#app').innerHTML='<p>Scegli il registro da compilare.</p>'+R.map(x=>`<button class="row" onclick="go('${x.id}')"><b>${x.doc?'DOC '+x.doc:'Stagionati'}</b>${E(x.t)}</button>`).join('');
+ else r.k==='g'?gridView(r):listView(r)}
+const rec=(id=V.id)=>((S.g[id]||{})[V.m]||{})[V.d]||{};
+const bad=(k,v)=>v!==undefined&&v!==''&&!isNaN(v)&&(k==='FR1'?+v>-15:+v>6);
+function listView(r){
+ const rows=S.r[r.id]||[],p=pre;pre={};
+ const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option>C<option>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} value="${E(p[k]??(t==='d'?TD:k==='s'?S.f:''))}">`)+'</label>').join('');
+ const list=rows.map((x,i)=>[x,i]).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}</span><span>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="ex(${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span></div>`).join('');
+ $('#app').innerHTML=`${r.id==='prod'?rc1():''}${inp}<button class="b" onclick="add('${r.id}')">Aggiungi</button>${r.id==='prod'?rc2():''}<h2>Registrazioni (${rows.length})</h2>${list||'<p class="st">Ancora nessuna registrazione.</p>'}${pbtn(r)}`}
+const act=w=>{const a=(S.r.lot||[]).map((x,i)=>[x,i]).filter(([x])=>!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD));const m=w?a.filter(([x])=>(x.p||'').toLowerCase().includes(w)):a;return m.length?m:a};
+const lopt=w=>{const a=act(w);return`<option value="">${a.length?'Scegli dai lotti in ingresso':'Nessun lotto attivo (compila il DOC 05)'}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
+function pick(k,el){const x=S.r.lot[el.value];if(!x)return;$('#f_'+k).value=`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
+function pickp(k,el){const x=S.r.lot[el.value];if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),`${x.p}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`);el.value=''}
+function ex(i){const x=S.r.lot[i];x.ex=x.ex?'':1;save();render()}
+function add(id){
+ const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());
+ const miss=[...document.querySelectorAll('#rcl select')].filter(e=>!e.value).map(e=>e.dataset.g);
+ if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
+ if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
+ if(o.s)S.f=o.s;(S.r[id]=S.r[id]||[]).push(o);save();
+ if(id==='lot'&&o.c==='NC'){pre={d:o.d,p:o.p,fo:o.fo,a:'Prodotto non conforme al ricevimento'};msg('Registrata: compila la non conformità');go('nc');return}
+ msg('Registrazione aggiunta');render()}
+function del(id,i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.r[id].splice(i,1);save();render()}
+function gridView(r){
+ const dim=new Date(V.m.slice(0,4),V.m.slice(5),0).getDate();if(+V.d>dim)V.d=pad(dim);
+ const o=rec(),days=Array.from({length:dim},(_,i)=>`<option ${pad(i+1)===V.d?'selected':''}>${pad(i+1)}`).join('');
+ const bar=`<div class="g2"><label>Mese<input type="month" value="${V.m}" onchange="V.m=this.value||V.m;render()"></label><label>Giorno<select onchange="V.d=this.value;render()">${days}</select></label></div>`;
+ let f;
+ if(r.id==='temp')f='<div id="bn" class="warn"></div><div class="g2">'+TK.map(k=>`<label>${k==='FR1'?'FR1 (freezer, ≤ −18 °C)':k+' (frigo, ≤ +4 °C)'}<input inputmode="decimal" data-k="${k}" class="${bad(k,o[k])?'bad':''}" value="${E(o[k]||'')}" oninput="gset('${k}',this)"></label>`).join('')+'</div>';
+ else f=`<label>Controllo pre-operativo<select onchange="gset('pre',this)"><option value="">—<option ${o.pre==='C'?'selected':''}>C<option ${o.pre==='NC'?'selected':''}>NC</select></label>`+AR.map((a,i)=>`<label class="ck"><input type="checkbox" ${o['a'+i]?'checked':''} onchange="gset('a${i}',this)">${a}</label>`).join('')+'<button class="b o" onclick="allOk()">Segna tutto fatto</button>';
+ $('#app').innerHTML=bar+f+`<label>Firma<input value="${E(o.s||S.f)}" oninput="gset('s',this)"></label>`+pbtn(r);if(r.id==='temp')ban()}
+function gset(k,el){
+ const g=S.g[V.id]=S.g[V.id]||{},m=g[V.m]=g[V.m]||{},o=m[V.d]=m[V.d]||{};
+ const v=el.type==='checkbox'?(el.checked?'✓':''):el.value.replace(',','.');o[k]=v;if(k==='s')S.f=v;else if(!o.s&&S.f)o.s=S.f;
+ if(el.dataset.k){el.classList.toggle('bad',bad(k,v));ban()}save()}
+function allOk(){AR.forEach((a,i)=>gset('a'+i,{type:'checkbox',checked:true,dataset:{}}));render()}
+function ban(){const o=rec(),b=TK.filter(k=>bad(k,o[k]));$('#bn').innerHTML=b.length?`<b>Fuori soglia: ${b.map(k=>k+' '+o[k]+' °C').join(', ')}</b><br><button class="b" onclick="nc2('${b.join(',')}')">Apri non conformità</button>`:''}
+function nc2(ks){const o=rec();pre={d:`${V.m}-${V.d}`,a:'Temperatura fuori soglia: '+ks.split(',').map(k=>k+' '+o[k]+' °C').join(', '),z:'Verifica e ripristino della funzionalità come da procedura'};go('nc')}
+const pbtn=r=>`<h2>Scheda stampabile${r.k==='g'?' ('+MES[+V.m.slice(5)-1]+' '+V.m.slice(0,4)+')':''}</h2><button class="b o" onclick="vw('${r.id}')">Visualizza</button><button class="b" onclick="pr('${r.id}')">Stampa</button><button class="b o" onclick="shr('${r.id}')">Condividi</button><button class="b o" onclick="dl('${r.id}')">Scarica scheda</button>`;
+const PCSS='.pg{font:10px/1.2 Arial,sans-serif;color:#000;background:#fff;break-after:page;page-break-after:always}.pg:last-child{break-after:auto;page-break-after:auto}.hd{border:1px solid #000;margin-bottom:5mm}.h1{display:flex;justify-content:space-between;background:#dfe7f1;padding:1mm 2mm;font-size:12px;border-bottom:1px solid #000}.h2{text-align:center;font-weight:700;padding:1.2mm;font-size:13px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:0 1mm;font-size:9.5px;text-align:center}th{background:#c9d6e6;padding:1.2mm}td{height:var(--rh,8mm)}.gd{font-size:10px;margin:4mm 0}.ft{display:flex;border:1px solid #000;margin-top:5mm;font-size:9px}.ft div{flex:1;padding:2mm;text-align:center}.lb{width:70mm;height:37mm;box-sizing:border-box;padding:3mm;display:flex;flex-direction:column;justify-content:center;gap:1.5mm;overflow:hidden;font:12px Arial,sans-serif;color:#000;background:#fff}.lb b{font-size:15px;line-height:1.15}.lg{display:grid;grid-template-columns:repeat(3,70mm)}.lg .lb{border:.2mm dashed #999}.lw{break-after:page;page-break-after:always}.lw:last-child{break-after:auto;page-break-after:auto}';
+document.head.append(Object.assign(document.createElement('style'),{textContent:PCSS}));
+function sheet(r){
+ const hd=x=>`<div class="hd"><div class="h1"><b>AZ. AGR. IL CASTELLACCIO</b><b>${r.doc?'DOC '+r.doc:''}</b></div><div class="h2">${E(r.t)}${x||''}</div></div>`;
+ const ft='<div class="ft"><div>Elaborato da:<br><b>Grow, al fianco delle Aziende</b></div><div>Grow S.r.l.<br>Viale della Resistenza, 69 – 64025 Pineto (TE)<br>P. Iva 02063470674<br>info@growcf.it – www.growcf.it</div></div>';
+ const gd=r.g?`<p class="gd"><b>Guida alla compilazione:</b> ${E(r.g)}</p>`:'',o=r.o==='l'?'landscape':'portrait';
+ let h='';
+ if(r.k==='g'){
+  const M=(S.g[r.id]||{})[V.m]||{},x=` &nbsp; MESE: <u>${MES[+V.m.slice(5)-1]}</u> &nbsp; ANNO: <u>${V.m.slice(0,4)}</u>`,days=Array.from({length:31},(_,i)=>pad(i+1));
+  if(r.id==='temp')h=`<table style="--rh:6.4mm"><tr><th rowspan="2">GG<th colspan="8">Temperatura ottimale frigoriferi<br>T ≤ +4 °C ± 2 °C<th colspan="2">Temperatura ottimale freezer<br>T ≤ −18 °C ± 3 °C<th rowspan="2">FIRMA</tr><tr>${TK.slice(0,7).map(k=>`<th>${k}`).join('')}<th>/<th>FR1<th>/</tr>${days.map(d=>{const q=M[d]||{};return`<tr><td>${d}${TK.slice(0,7).map(k=>`<td>${E(q[k])}`).join('')}<td><td>${E(q.FR1)}<td><td>${E(q.s)}</tr>`}).join('')}</table>`;
+  else h=`<table style="--rh:4.1mm"><tr><th rowspan="2">GG<th rowspan="2">Controllo pre-operativo C/NC<th colspan="12">GIORNALIERA<th rowspan="2">FIRMA</tr><tr>${AR.map(a=>`<th style="font-size:7.5px">${a}`).join('')}</tr>${days.map(d=>{const q=M[d]||{};return`<tr><td>${d}<td>${E(q.pre)}${AR.map((a,i)=>`<td>${q['a'+i]?'✓':''}`).join('')}<td>${E(q.s)}</tr>`}).join('')}</table>`;
+  h=`<div class="pg">${hd(r.id==='temp'?x:x)}${h}${gd}${ft}</div>`}
+ else{
+  const rows=[...(S.r[r.id]||[])].sort((a,b)=>(a.d||'').localeCompare(b.d||'')),np=Math.max(1,Math.ceil(rows.length/r.n)),rh=r.o==='l'?Math.floor(135/r.n):Math.floor(205/r.n);
+  for(let p=0;p<np;p++){const c=rows.slice(p*r.n,(p+1)*r.n);while(c.length<r.n)c.push({});
+   h+=`<div class="pg">${hd()}<table style="--rh:${rh}mm"><tr>${r.f.map(f=>`<th>${E(f[1])}`).join('')}</tr>${c.map(x=>`<tr>${r.f.map(([k,,t])=>`<td>${E(t==='d'?fmt(x[k]):x[k])}`).join('')}</tr>`).join('')}</table>${gd}${ft}</div>`}}
+ return{o,h}}
+const rco=()=>'<option value="">Nessuna (inserimento manuale)</option>'+(S.rc||[]).map((x,i)=>`<option value="${i}">${E(x.n)}</option>`).join('');
+const rcm=()=>(S.rc||[]).map((x,i)=>`<div class="it"><span><b>${E(x.n)}</b> – ${E(x.ing.join(', '))}</span><button class="x" onclick="rdel(${i},this)">Elimina</button></div>`).join('');
+const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><div id="rcl"></div>`;
+const rc2=()=>`<button class="b o" onclick="rsv()">Salva come ricetta</button><h2>Ricette salvate</h2><div id="rl">${rcm()||'<p class="st">Nessuna ricetta: scrivi prodotto e ingredienti (separati da virgola) e premi "Salva come ricetta".</p>'}</div>`;
+function rref(){$('#rc').innerHTML=rco();$('#rl').innerHTML=rcm()}
+function rsv(){const n=$('#f_p').value.trim(),g=$('#f_i').value.split(/[;,\n]/).map(t=>t.trim()).filter(Boolean);
+ if(!n||!g.length)return msg('Scrivi prodotto e ingredienti');
+ S.rc=S.rc||[];const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()),q={n,ing:g};k<0?S.rc.push(q):S.rc[k]=q;save();rref();msg('Ricetta salvata')}
+function rdel(i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.rc.splice(i,1);save();rref();$('#rcl').innerHTML=''}
+function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML='';return}
+ $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>`<label>${E(g)}<select data-g="${E(g)}" onchange="rcu()">${lopt(g.toLowerCase())}</select></label>`).join('');rcu()}
+function rcu(){const s=[...document.querySelectorAll('#rcl select')];$('#f_i').value=s.map(e=>e.dataset.g).join(', ');
+ $('#f_e').value=s.filter(e=>e.value).map(e=>{const x=S.r.lot[e.value];return`${e.dataset.g}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`}).join('; ')}
+let LB={i:0,n:1,f:'a'};
+function lbh(){const x=S.r.prod[LB.i],c=`<div class="lb"><b>${E(x.p)||'Prodotto'}</b><span>Lotto: ${E(x.l)}</span><span>Data: ${fmt(x.d)}</span></div>`,n=Math.max(1,Math.min(99,+LB.n||1));
+ if(LB.f==='s')return{o:'70mm 37mm',m:'0',h:Array(n).fill(`<div class="lw">${c}</div>`).join('')};
+ let h='';for(let k=0;k<n;k+=24)h+=`<div class="lw"><div class="lg">${Array(Math.min(24,n-k)).fill(c).join('')}</div></div>`;return{o:'A4 portrait',m:'8mm',h}}
+function lab(i){LB.i=i;lbv()}
+function lbv(){const v=$('#vw');v.innerHTML=`<button class="b" onclick="this.parentNode.hidden=true">Chiudi</button><div class="g2"><label>Copie<input type="number" min="1" max="99" value="${LB.n}" onchange="LB.n=this.value;lbv()"></label><label>Formato<select onchange="LB.f=this.value;lbv()"><option value="a" ${LB.f==='a'?'selected':''}>Foglio A4 (24 etichette 70×37 mm)</option><option value="s" ${LB.f==='s'?'selected':''}>Etichetta singola 70×37 mm</option></select></label></div><button class="b" onclick="lbp()">Stampa etichetta</button><button class="b o" onclick="lbd()">Scarica</button><div style="overflow-x:auto;margin-top:10px">${lbh().h}</div>`;v.hidden=false}
+function lbp(){const s=lbh();$('#pr').innerHTML=s.h;$('#pg').textContent=`@page{size:${s.o};margin:${s.m}}`;setTimeout(()=>tp(lbd),60)}
+async function lbd(){const s=lbh(),x=S.r.prod[LB.i],z=t=>(t||'').replace(/[^\w]+/g,'-');try{const d=await claude.use('downloads');if(!d)throw 0;await d.save({filename:`Etichetta-${z(x.p)||'prodotto'}-${z(x.l)}.html`,data:`<!doctype html><meta charset="utf-8"><title>Etichetta</title><style>${PCSS}@page{size:${s.o};margin:${s.m}}body{margin:0}</style>${s.h}`});msg('Apri il file e stampa dal browser')}catch(e){msg('Download non disponibile qui')}}
+function tp(fb){let ok=0;const f=()=>ok=1;addEventListener('beforeprint',f,{once:true});try{window.print()}catch(e){}setTimeout(()=>{removeEventListener('beforeprint',f);if(!ok)fb()},900)}
+function vw(id){const v=$('#vw');v.innerHTML='<button class="b" onclick="this.parentNode.hidden=true">Chiudi</button><div style="overflow-x:auto">'+sheet(R.find(x=>x.id===id)).h+'</div>';v.hidden=false;v.scrollTop=0}
+function pr(id){const s=sheet(R.find(x=>x.id===id));$('#pr').innerHTML=s.h;$('#pg').textContent=`@page{size:A4 ${s.o};margin:8mm}`;setTimeout(()=>tp(()=>dl(id)),60)}
+async function dl(id){
+ const r=R.find(x=>x.id===id),s=sheet(r);
+ try{const d=await claude.use('downloads');if(!d)throw 0;await d.save({filename:`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.html`,data:`<!doctype html><meta charset="utf-8"><title>${E(r.t)}</title><style>${PCSS}@page{size:A4 ${s.o};margin:8mm}body{margin:0}</style>${s.h}`});msg('Apri il file e stampa dal browser')}
+ catch(e){msg('Download non disponibile qui')}}
+boot();
+</script><script>
+window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;a.click()}}:null};
+async function shr(id){
+ if(!window.html2pdf)return msg('Serve la connessione per creare il PDF');
+ const r=R.find(x=>x.id===id),s=sheet(r),el=document.createElement('div');msg('Preparo il PDF…');
+ el.style.cssText='position:fixed;left:-9999px;top:0;width:'+(s.o==='landscape'?'281mm':'194mm');el.innerHTML=s.h;document.body.append(el);
+ try{const blob=await html2pdf().set({margin:8,image:{type:'jpeg',quality:.95},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:s.o},pagebreak:{mode:['css']}}).from(el).outputPdf('blob');
+  const n=`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.pdf`,f=new File([blob],n,{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:r.t});
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()}}
+ catch(e){if(e.name!=='AbortError')msg('Condivisione non riuscita')}finally{el.remove()}}
+</script>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,onSnapshot,setDoc,deleteField} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import cfg from './firebase-config.js';
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+const app=initializeApp(cfg),auth=getAuth(app),db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+const cl=o=>JSON.parse(JSON.stringify(o)),uid=()=>Date.now().toString(36).padStart(9,'0')+Math.random().toString(36).slice(2,5);
+let P={r:{},g:{},rc:[]};
+const ui=()=>{if(!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))render()};
+function start(){
+ onSnapshot(collection(db,'rows'),s=>{s.docs.forEach(d=>{S.r[d.id]=Object.values(d.data().m||{}).sort((a,b)=>a._id<b._id?-1:1)});P.r=cl(S.r);ui()});
+ onSnapshot(collection(db,'g'),s=>{s.docs.forEach(d=>{const[i,m]=d.id.split('_');(S.g[i]=S.g[i]||{})[m]=d.data().d||{}});P.g=cl(S.g);ui()});
+ onSnapshot(doc(db,'meta','rc'),d=>{S.rc=Object.values((d.data()||{}).m||{});P.rc=cl(S.rc);ui()})}
+window.push=()=>{
+ for(const id in S.r){const rows=S.r[id];rows.forEach(x=>{if(!x._id)x._id=uid()});
+  const old={},m={};(P.r[id]||[]).forEach(x=>old[x._id]=JSON.stringify(x));
+  rows.forEach(x=>{if(old[x._id]!==JSON.stringify(x))m[x._id]=x;delete old[x._id]});
+  for(const k in old)m[k]=deleteField();
+  if(Object.keys(m).length)setDoc(doc(db,'rows',id),{m},{merge:true})}
+ for(const id in S.g)for(const mo in S.g[id]){const up={},pd=(P.g[id]||{})[mo]||{};
+  for(const d in S.g[id][mo])for(const k in S.g[id][mo][d])if((pd[d]||{})[k]!==S.g[id][mo][d][k])(up[d]=up[d]||{})[k]=S.g[id][mo][d][k];
+  if(Object.keys(up).length)setDoc(doc(db,'g',id+'_'+mo),{d:up},{merge:true})}
+ const key=x=>x.n.toLowerCase().replace(/[^a-z0-9]+/g,'_')||'r',cur={},old={};(S.rc||[]).forEach(x=>cur[key(x)]=x);P.rc.forEach(x=>old[key(x)]=x);
+ const up={};for(const k in cur)if(JSON.stringify(cur[k])!==JSON.stringify(old[k]))up[k]=cur[k];for(const k in old)if(!cur[k])up[k]=deleteField();
+ if(Object.keys(up).length)setDoc(doc(db,'meta','rc'),{m:up},{merge:true});
+ P={r:cl(S.r),g:cl(S.g),rc:cl(S.rc||[])}};
+window.logout=()=>signOut(auth).then(()=>location.reload());
+window.dologin=()=>signInWithEmailAndPassword(auth,$('#le').value.trim(),$('#lp').value).catch(()=>msg('Email o password non corretti'));
+onAuthStateChanged(auth,u=>{
+ if(u){$('#st').innerHTML='Dati condivisi tra tutti i dispositivi · <a href="#" onclick="logout();return false">Esci</a>';start();render()}
+ else $('#app').innerHTML='<h2>Accedi</h2><label>Email<input id="le" type="email" autocomplete="username"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><button class="b" onclick="dologin()">Entra</button>'});
+</script>
+</body></html>
