@@ -67,7 +67,7 @@ const bad=(k,v)=>v!==undefined&&v!==''&&!isNaN(v)&&(k==='FR1'?+v>-15:+v>6);
 function listView(r){
  const rows=S.r[r.id]||[],p=pre;pre={};
  const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option>C<option>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} value="${E(p[k]??(t==='d'?TD:k==='s'?S.f:''))}">`)+'</label>').join('');
- const list=rows.map((x,i)=>[x,i]).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}</span><span>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="ex(${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span></div>`).join('');
+ const list=rows.map((x,i)=>[x,i]).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc):'')+(x.ex?' · ESAURITO':''):''}</span><span>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="ex(${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span></div>`).join('');
  $('#app').innerHTML=`${r.id==='prod'?rc1():''}${inp}<button class="b" onclick="add('${r.id}')">Aggiungi</button>${r.id==='prod'?rc2():''}<h2>Registrazioni (${rows.length})</h2>${list||'<p class="st">Ancora nessuna registrazione.</p>'}${pbtn(r)}`}
 const act=w=>{const a=(S.r.lot||[]).map((x,i)=>[x,i]).filter(([x])=>!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD));const m=w?a.filter(([x])=>(x.p||'').toLowerCase().includes(w)):a;return m.length?m:a};
 const lopt=w=>{const a=act(w);return`<option value="">${a.length?'Scegli dai lotti in ingresso':'Nessun lotto attivo (compila il DOC 05)'}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
@@ -148,7 +148,7 @@ function rsave(){const n=$('#rn').value.trim(),g=[...document.querySelectorAll('
  if(!n||!g.length)return msg('Scrivi il nome e almeno un ingrediente');
  S.rc=S.rc||[];const q={n,ing:g};
  if(RE>=0)S.rc[RE]=q;else{const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase());k<0?S.rc.push(q):S.rc[k]=q}
- RE=-1;save();msg('Ricetta salvata');recView()}
+ RE=-1;save();msg('Ricetta salvata con '+g.length+(g.length===1?' ingrediente':' ingredienti'));recView()}
 function rdel2(i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.rc.splice(i,1);RE=-1;save();recView()}
 let LB={i:0,n:1,f:'a'};
 function lbh(){const x=S.r.prod[LB.i],c=`<div class="lb"><b>${E(x.p)||'Prodotto'}</b><span>Lotto: ${E(x.l)}</span><span>Data: ${fmt(x.d)}</span></div>`,n=Math.max(1,Math.min(99,+LB.n||1));
@@ -190,7 +190,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 const app=initializeApp(cfg),auth=getAuth(app),db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
 const cl=o=>JSON.parse(JSON.stringify(o)),uid=()=>Date.now().toString(36).padStart(9,'0')+Math.random().toString(36).slice(2,5);
 let P={r:{},g:{},rc:[]};
-const ui=()=>{const d=[...document.querySelectorAll('#app input[id^="f_"],#rcl input')].some(e=>e.type!=='date'&&e.value&&e.id!=='f_s');if(!d&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))render()};
+const ui=()=>{if(V.id==='ric')return;const d=[...document.querySelectorAll('#app input[id^="f_"],#rcl input')].some(e=>e.type!=='date'&&e.value&&e.id!=='f_s');if(!d&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))render()};
 function start(){
  onSnapshot(collection(db,'rows'),s=>{s.docs.forEach(d=>{S.r[d.id]=Object.values(d.data().m||{}).sort((a,b)=>a._id<b._id?-1:1)});P.r=cl(S.r);ui()});
  onSnapshot(collection(db,'g'),s=>{s.docs.forEach(d=>{const[i,m]=d.id.split('_');(S.g[i]=S.g[i]||{})[m]=d.data().d||{}});P.g=cl(S.g);ui()});
