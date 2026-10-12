@@ -22,15 +22,17 @@ input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-wei
 .ck{display:flex;gap:10px;align-items:center;color:var(--fg);font-size:15px;margin:0 0 6px;min-height:36px}.ck input{width:22px;min-height:22px;margin:0}
 .it{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
 .x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
-.ing{display:grid;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 8px;background:var(--card)}.ing input,.ing select{margin-top:0}.ing .x{justify-self:end}
+.ing{display:grid;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 8px;background:var(--card)}.ing input,.ing select{margin-top:0}.ing .acts{display:flex;justify-content:space-between}.ing input[hidden]{display:none}
 .warn{background:var(--wb);color:var(--bad);border-radius:8px;padding:10px;margin:0 0 10px}.warn:empty{display:none}.warn .b{margin-top:8px;background:var(--bad);border-color:var(--bad)}
 .st{text-align:center;color:var(--mut);font-size:12px}.msg{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;display:none}
 h2{font-size:15px;margin:18px 0 6px}
 #pr{display:none}
+#spl{position:fixed;inset:0;z-index:99;background:#1f3b63;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s;text-align:center;padding:20px}#spl b{font-size:22px;letter-spacing:.5px}#spl span{font-size:16px;opacity:.9}
 #vw{position:fixed;inset:0;z-index:9;overflow:auto;background:var(--bg);padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px))}#vw[hidden]{display:none}#vw .pg{min-width:680px;margin:10px 0;padding:6px}
 @media print{body>*:not(#pr){display:none!important}#pr{display:block}body{background:#fff}}
 </style><style id="pg"></style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1f3b63"><link rel="apple-touch-icon" href="icon-192.png"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script></head>
 <body>
+<div id="spl"><svg width="120" height="120" viewBox="0 0 100 100" aria-hidden="true"><rect x="28" y="25" width="10" height="50" fill="#fff"/><rect x="62" y="25" width="10" height="50" fill="#fff"/><rect x="38" y="47" width="24" height="6" fill="#fff"/></svg><b>HACCP</b><span>Realizzata da Geremia Saltarelli</span></div>
 <div class="top"><button id="bk" class="bk" onclick="go(null)" hidden>‹ Tutti i registri</button><h1 id="ti">HACCP · Il Castellaccio</h1></div>
 <main id="app"></main><p id="st" class="st"></p><div id="msg" class="msg"></div><div id="pr"></div><div id="vw" hidden></div>
 <script>
@@ -54,7 +56,7 @@ let S={r:{},g:{},f:''},ref=null,V={id:null,m:TD.slice(0,7),d:TD.slice(8)},pre={}
 const LS='haccp-castellaccio';
 function save(){try{localStorage.setItem(LS,JSON.stringify({f:S.f}))}catch(e){}window.push&&push()}
 function msg(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(()=>m.style.display='none',2500)}
-function boot(){let f='';try{f=JSON.parse(localStorage.getItem(LS)||'{}').f||''}catch(e){}S={r:{},g:{},f,rc:[]};$('#app').innerHTML='<p class="st">Caricamento…</p>'}
+function boot(){let f='';try{f=JSON.parse(localStorage.getItem(LS)||'{}').f||''}catch(e){}S={r:{},g:{},f,rc:[]};$('#app').innerHTML='<p class="st">Caricamento…</p>';setTimeout(()=>{const p=$('#spl');if(p){p.style.opacity=0;setTimeout(()=>p.remove(),500)}},1600)}
 function go(id){V.id=id;render();scrollTo(0,0)}
 function render(){
  const r=R.find(x=>x.id===V.id);$('#bk').hidden=!r;$('#ti').textContent=r?(r.doc?'DOC '+r.doc+' · ':'')+r.t:'HACCP · Il Castellaccio';
@@ -74,7 +76,7 @@ function pickp(k,el){const x=S.r.lot[el.value];if(!x)return;const j=(o,t)=>o.val
 function ex(i){const x=S.r.lot[i];x.ex=x.ex?'':1;save();render()}
 function add(id){
  const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());
- const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&!r.querySelector('select').value).map(r=>r.querySelector('input').value.trim());
+ const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&(!r.querySelector('select').value||(r.querySelector('select').value==='x'&&!r.querySelector('.mn').value.trim()))).map(r=>r.querySelector('input').value.trim());
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
  if(o.s)S.f=o.s;(S.r[id]=S.r[id]||[]).push(o);save();
@@ -117,27 +119,32 @@ function sheet(r){
 const rco=()=>'<option value="">Nessuna (inserimento manuale)</option>'+(S.rc||[]).map((x,i)=>`<option value="${i}">${E(x.n)}</option>`).join('');
 const rcm=()=>(S.rc||[]).map((x,i)=>`<div class="it"><span><b>${E(x.n)}</b> – ${E(x.ing.join(', '))}</span><button class="x" onclick="rdel(${i},this)">Elimina</button></div>`).join('');
 const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><button class="b o" onclick="go('ric')">Crea o modifica le ricette</button><h2>Ingredienti e lotti</h2><div id="rcl">${ing('')}</div><button class="b o" onclick="addIng('')">+ Aggiungi ingrediente</button>`;
-const rc2=()=>`<button class="b o" onclick="rsv()">Salva come ricetta</button><h2>Ricette salvate</h2><div id="rl">${rcm()||'<p class="st">Nessuna ricetta: scrivi prodotto e ingredienti (separati da virgola) e premi "Salva come ricetta".</p>'}</div>`;
+const rc2=()=>'';
 function rref(){$('#rc').innerHTML=rco();$('#rl').innerHTML=rcm()}
 function rsv(){const n=$('#f_p').value.trim(),g=$('#f_i').value.split(/[;,\n]/).map(t=>t.trim()).filter(Boolean);
  if(!n||!g.length)return msg('Scrivi prodotto e ingredienti');
  S.rc=S.rc||[];const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()),q={n,ing:g};k<0?S.rc.push(q):S.rc[k]=q;save();rref();msg('Ricetta salvata')}
 function rdel(i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.rc.splice(i,1);save();rref();$('#rcl').innerHTML=''}
-const ing=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}" oninput="rowf(this)"><select onchange="rcu()">${lopt(String(n).toLowerCase())}</select><button class="x" onclick="this.parentNode.remove();rcu()">Togli</button></div>`;
+const XO='<option value="x">Altro: lo scrivo a mano</option>';
+const ing=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}" oninput="rowf(this)"><select onchange="sx(this)">${lopt(String(n).toLowerCase())}${XO}</select><input class="mn" placeholder="Ditta, documento, lotto" hidden oninput="rcu()"><div class="acts"><button class="x" onclick="dupRow(this)">+ lotto</button><button class="x" onclick="this.closest('.ing').remove();rcu()">Togli</button></div></div>`;
 function addIng(n){$('#rcl').insertAdjacentHTML('beforeend',ing(n))}
-function rowf(el){const q=el.nextElementSibling,c=q.value;q.innerHTML=lopt(el.value.trim().toLowerCase());if(c&&[...q.options].some(o=>o.value===c))q.value=c;rcu()}
+function dupRow(b){const r=b.closest('.ing');r.insertAdjacentHTML('afterend',ing(r.querySelector('input').value))}
+function sx(q){q.parentNode.querySelector('.mn').hidden=q.value!=='x';rcu()}
+function rowf(el){const q=el.nextElementSibling,c=q.value;q.innerHTML=lopt(el.value.trim().toLowerCase())+XO;if(c&&[...q.options].some(o=>o.value===c))q.value=c;rcu()}
 function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
  $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>ing(g)).join('');rcu()}
-function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,x=v?S.r.lot[v]:null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`)});
+function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?S.r.lot[v]:null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`);else if(v==='x'&&mn)es.push(`${m}: ${mn}`)});
  $('#f_i').value=nm.join(', ');$('#f_e').value=es.join('; ')}
 let RE=-1;
+const rrow=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}"><div class="acts"><span></span><button class="x" onclick="this.closest('.ing').remove()">Togli</button></div></div>`;
+function raddrow(){$('#rrows').insertAdjacentHTML('beforeend',rrow(''));const i=document.querySelectorAll('#rrows input');i[i.length-1].focus()}
 function recView(){const x=RE>=0?(S.rc||[])[RE]:null,L=S.rc||[];
- $('#app').innerHTML=`<p class="st" style="text-align:left">Scrivi la ricetta una volta sola. Nel registro produzioni la scegli e inserisci solo i lotti.</p>
-<label>Nome del prodotto<input id="rn" value="${E(x?x.n:'')}"></label>
-<label>Ingredienti, uno per riga<textarea id="ri" rows="7">${E(x?x.ing.join('\n'):'')}</textarea></label>
-<button class="b" onclick="rsave()">${x?'Salva modifiche':'Salva ricetta'}</button>${x?'<button class="b o" onclick="RE=-1;recView()">Annulla</button>':''}
+ $('#app').innerHTML=`<p class="st" style="text-align:left">Scrivi la ricetta una sola volta, senza lotti. Nel registro produzioni la scegli e inserisci solo i dati di quel giorno.</p>
+<label>Nome della ricetta<input id="rn" placeholder="Nome del prodotto" value="${E(x?x.n:'')}"></label>
+<h2>Ingredienti</h2><div id="rrows">${(x?x.ing:['','','']).map(g=>rrow(g)).join('')}</div>
+<button class="b o" onclick="raddrow()">+ Aggiungi ingrediente</button><br><button class="b" onclick="rsave()">${x?'Salva modifiche':'Salva ricetta'}</button>${x?'<button class="b o" onclick="RE=-1;recView()">Annulla</button>':''}
 <h2>Ricette salvate (${L.length})</h2>`+(L.map((r,i)=>`<div class="it"><span><b>${E(r.n)}</b><br>${E(r.ing.join(', '))}</span><span><button class="x" onclick="RE=${i};recView();scrollTo(0,0)">Modifica</button><button class="x" onclick="rdel2(${i},this)">Elimina</button></span></div>`).join('')||'<p class="st">Nessuna ricetta salvata.</p>')}
-function rsave(){const n=$('#rn').value.trim(),g=$('#ri').value.split(/[\n;,]+/).map(t=>t.trim()).filter(Boolean);
+function rsave(){const n=$('#rn').value.trim(),g=[...document.querySelectorAll('#rrows input')].map(e=>e.value.trim()).filter(Boolean);
  if(!n||!g.length)return msg('Scrivi il nome e almeno un ingrediente');
  S.rc=S.rc||[];const q={n,ing:g};
  if(RE>=0)S.rc[RE]=q;else{const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase());k<0?S.rc.push(q):S.rc[k]=q}
