@@ -20,6 +20,7 @@ input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-wei
 .b{min-height:46px;padding:0 16px;border:1px solid var(--ac);border-radius:8px;background:var(--ac);color:var(--on);font:600 16px inherit;margin:4px 8px 4px 0}
 .b.o{background:none;color:var(--ac)}
 .ck{display:flex;gap:10px;align-items:center;color:var(--fg);font-size:15px;margin:0 0 6px;min-height:36px}.ck input{width:22px;min-height:22px;margin:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 8px}.dy{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:15px inherit;padding:0}.dy.on{background:var(--ac);color:var(--on);border-color:var(--ac)}.dy.al{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}.dy.sel{outline:3px solid var(--ac);outline-offset:1px}
 .dlb{background:var(--card);border:1px solid var(--ac);border-radius:8px;padding:10px;margin:0 0 10px;font-size:14px}
 .it{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
 .x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
@@ -97,7 +98,9 @@ function gridView(r){
  let f;
  if(r.id==='temp')f='<div id="bn" class="warn"></div><div class="g2">'+TK.map(k=>`<label>${k==='FR1'?'FR1 (freezer, ≤ −18 °C)':k+' (frigo, ≤ +4 °C)'}<input inputmode="decimal" data-k="${k}" class="${bad(k,o[k])?'bad':''}" value="${E(o[k]||'')}" oninput="gset('${k}',this)"></label>`).join('')+'</div>';
  else f=`<label>Controllo pre-operativo<select onchange="gset('pre',this)"><option value="">—<option ${o.pre==='C'?'selected':''}>C<option ${o.pre==='NC'?'selected':''}>NC</select></label>`+AR.map((a,i)=>`<label class="ck"><input type="checkbox" ${o['a'+i]?'checked':''} onchange="gset('a${i}',this)">${a}</label>`).join('')+'<button class="b o" onclick="allOk()">Segna tutto fatto</button>';
- $('#app').innerHTML=bar+f+`<label>Firma<input value="${E(o.s||S.f)}" oninput="gset('s',this)"></label>`+pbtn(r);if(r.id==='temp')ban()}
+ const M=(S.g[r.id]||{})[V.m]||{};
+ const ov='<div class="cal">'+Array.from({length:dim},(_,i)=>{const d=pad(i+1),q=M[d]||{},has=r.id==='temp'?TK.some(k=>q[k]!==undefined&&q[k]!==''):!!(q.pre||AR.some((a,j)=>q['a'+j])),al=r.id==='temp'&&TK.some(k=>bad(k,q[k]));return`<button class="dy${has?' on':''}${al?' al':''}${d===V.d?' sel':''}" onclick="V.d='${d}';render()">${i+1}</button>`}).join('')+'</div><p class="st" style="text-align:left">I giorni colorati sono già compilati. Tocca un giorno per vederlo, aggiungere valori o correggerli.</p>';
+ $('#app').innerHTML=bar+ov+f+`<label>Firma<input value="${E(o.s||S.f)}" oninput="gset('s',this)"></label>`+pbtn(r);if(r.id==='temp')ban()}
 function gset(k,el){
  const g=S.g[V.id]=S.g[V.id]||{},m=g[V.m]=g[V.m]||{},o=m[V.d]=m[V.d]||{};
  const v=el.type==='checkbox'?(el.checked?'✓':''):el.value.replace(',','.');o[k]=v;if(k==='s')S.f=v;else if(!o.s&&S.f)o.s=S.f;
