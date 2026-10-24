@@ -21,6 +21,7 @@ input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-wei
 .b.o{background:none;color:var(--ac)}
 .ck{display:flex;gap:10px;align-items:center;color:var(--fg);font-size:15px;margin:0 0 6px;min-height:36px}.ck input{width:22px;min-height:22px;margin:0}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 8px}.dy{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:15px inherit;padding:0}.dy.on{background:var(--ac);color:var(--on);border-color:var(--ac)}.dy.al{border-color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad)}.dy.sel{outline:3px solid var(--ac);outline-offset:1px}
+.ck small{color:var(--mut)}
 .dlb{background:var(--card);border:1px solid var(--ac);border-radius:8px;padding:10px;margin:0 0 10px;font-size:14px}
 .it{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
 .x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
@@ -49,9 +50,11 @@ const R=[
 {id:'nc',k:'l',doc:'03',t:'Registro delle non conformità',o:'p',n:16,g:'Il registro delle non conformità si compila solo in caso di anomalie. Si riporta l\'anomalia riscontrata e le azioni correttive intraprese.',f:[['d','Data','d'],['p','Prodotto'],['fo','Fornitore'],['a','Descrizione anomalia'],['z','Azione correttiva (scarto, reso o altro)']]},
 {id:'man',k:'l',doc:'04',t:'Registro manutenzione locali, attrezzature, impianti',o:'p',n:16,g:'In caso di manutenzione di locali, attrezzature, impianti, registrare e descrivere il tipo di intervento effettuato e firmare a garanzia di quanto riportato.',f:[['d','Data','d'],['l','Locale / attrezzature / impianti'],['i','Descrizione intervento'],['s','Firma']]},
 {id:'lot',k:'l',doc:'05',t:'Registro lotti prodotti in ingresso',o:'l',n:12,g:'Compilare ad ogni ricevimento merce. Se il prodotto non è conforme, compilare anche il Registro delle non conformità.',f:[['d','Data ricevimento','d'],['p','Prodotto'],['fo','Fornitore'],['b','DDT / fattura n.'],['l','Lotto fornitore'],['sc','Scadenza','d'],['t','Temp. (°C)','n'],['c','Conforme (C/NC)','c'],['s','Firma']]},
+{id:'aut',k:'l',doc:'',b:'Aziendale',t:'Prodotti aziendali (autoproduzione)',o:'l',n:10,nofoot:true,g:'Registrare ogni raccolta, macellazione o produzione di materia prima aziendale. Il lotto interno si genera da solo se lo lasci vuoto. Per la carne indicare il mattatoio e il suo documento; l’autofattura resta il documento fiscale.',f:[['d','Data (raccolta, macellazione, produzione)','d'],['p','Prodotto'],['q','Quantità'],['l','Lotto interno'],['o','Origine (frutteto, campo, allevamento)'],['m','Mattatoio e documento (carne)'],['a','Autofattura n. e data'],['sc','Da consumare entro','d'],['s','Firma']]},
 {id:'abb',k:'l',doc:'06',t:'Registro delle operazioni di abbattimento',o:'l',n:12,f:[['d','Data','d'],['q','Quantità'],['p','Denominazione prodotto/semilavorato sottoposto ad abbattimento'],['t','Temperatura utilizzata (°C)','n'],['m','Tempo impiegato'],['ds','Data somministrazione','d'],['s','Firma']]},
 {id:'prod',k:'l',doc:'07',t:'Registro produzioni',o:'l',n:10,f:[['d','Data di produzione','d'],['p','Denominazione prodotto'],['i','Ingredienti'],['e','Estremi identificativi degli ingredienti impiegati'],['l','Lotto attribuito'],['s','Firma operatore o delegato']]},
 {id:'ric',k:'r',doc:'',b:'Ricette',t:'Prodotti e ingredienti'},
+{id:'inv',k:'v',doc:'',b:'Invia',t:'Condividi più registri insieme'},
 {id:'stag',k:'l',doc:'',t:'Registro produzioni – Stagionati',o:'l',n:10,g:'Compilare ad ogni produzione, attribuire un lotto interno. Per ogni materia prima indicare ditta, fattura n./data e lotto fornitore.',f:[['d','Data','d'],['q','Quantità'],['l','Lotto attribuito'],['c','Riferimenti carne','t','carne'],['b','Riferimenti budello','t','budello'],['pe','Riferimenti pepe','t','pepe'],['sa','Riferimenti sale','t','sale'],['s','Firma operatore']]}
 ];
 let S={r:{},g:{},f:''},ref=null,V={id:null,m:TD.slice(0,7),d:TD.slice(8)},pre={};
@@ -63,31 +66,34 @@ let ED=-1,DL=null;function go(id){ED=-1;V.id=id;render();scrollTo(0,0)}
 function render(){
  const r=R.find(x=>x.id===V.id);$('#bk').hidden=!r;$('#ti').textContent=r?(r.doc?'DOC '+r.doc+' · ':'')+r.t:'HACCP · Il Castellaccio';
  if(!r)$('#app').innerHTML='<p>Scegli il registro da compilare.</p>'+R.map(x=>`<button class="row" onclick="go('${x.id}')"><b>${x.b||(x.doc?'DOC '+x.doc:'Stagionati')}</b>${E(x.t)}</button>`).join('')+'<button class="b o" onclick="shareApp()">Condividi app</button>';
- else r.k==='g'?gridView(r):r.k==='r'?recView():listView(r)}
+ else r.k==='g'?gridView(r):r.k==='r'?recView():r.k==='v'?sendView():listView(r)}
 const rec=(id=V.id)=>((S.g[id]||{})[V.m]||{})[V.d]||{};
 const bad=(k,v)=>v!==undefined&&v!==''&&!isNaN(v)&&(k==='FR1'?+v>-15:+v>6);
 function listView(r){
  const rows=S.r[r.id]||[],p=pre,eq=ED>=0?rows[ED]:null,bs=(r.id==='lot'&&DL&&!(ED>=0?rows[ED]:null))?DL:{};pre={};
- const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${r.id==='lot'&&(k==='p'||k==='fo')?'list="dl_'+k+'" autocomplete="off"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>').join('');
+ const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${(r.id==='lot'&&(k==='p'||k==='fo'))||(r.id==='aut'&&k==='p')?'list="dl_'+k+'" autocomplete="off"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>').join('');
  const bn=(r.id==='lot'&&DL&&!eq)?`<div class="dlb">Consegna aperta: <b>${E(DL.fo)}</b> · fattura/DDT <b>${E(DL.b)}</b> · ${fmt(DL.d)}<br>Compila solo prodotto, lotto e scadenza. Per un altro fornitore o un'altra fattura chiudi la consegna.<br><button class="x" onclick="DL=null;render()">Chiudi consegna</button></div>`:'';
- const dls=r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set(rows.map(x=>x[k]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
- const list=rows.map((x,i)=>[x,i]).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc):'')+(x.ex?' · ESAURITO':''):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button><button class="x" onclick="ex(${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span></div>`).join('');
+ const dls=r.id==='aut'?`<datalist id="dl_p">${[...new Set(['Mele','Mirtilli','Prugne','Noci','Uova','Carne di maiale','Agnello',...rows.map(x=>x.p).filter(Boolean)])].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`:r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set(rows.map(x=>x[k]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
+ const list=rows.map((x,i)=>[x,i]).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.ex?' · ESAURITO':''):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span></div>`).join('');
  $('#app').innerHTML=`${r.id==='prod'?rc1():''}${bn}${inp}${dls}<button class="b" onclick="add('${r.id}')">${eq?'Salva modifiche':'Aggiungi'}</button>${eq?'<button class="b o" onclick="ED=-1;render()">Annulla</button>':''}${r.id==='prod'?rc2():''}<h2>Registrazioni (${rows.length})</h2>${list||'<p class="st">Ancora nessuna registrazione.</p>'}${pbtn(r)}`}
-const act=w=>{const a=(S.r.lot||[]).map((x,i)=>[x,i]).filter(([x])=>!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD));const m=w?a.filter(([x])=>(x.p||'').toLowerCase().includes(w)):a;return m.length?m:a};
+const au=x=>({p:x.p,fo:'Produzione aziendale',b:x.a||'',l:x.l,sc:x.sc});
+const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
+const act=w=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});const m=w?a.filter(([x])=>(x.p||'').toLowerCase().includes(w)):a;return m.length?m:a};
 const lopt=w=>{const a=act(w);return`<option value="">${a.length?'Scegli dai lotti in ingresso':'Nessun lotto attivo (compila il DOC 05)'}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
-function pick(k,el){const x=S.r.lot[el.value];if(!x)return;$('#f_'+k).value=`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
-function pickp(k,el){const x=S.r.lot[el.value];if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),`${x.p}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`);el.value=''}
-function ex(i){const x=S.r.lot[i];x.ex=x.ex?'':1;save();render()}
+const lt=(m,x)=>x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l}`:`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`;
+function pick(k,el){const x=el.value?gl(el.value):null;if(!x)return;$('#f_'+k).value=x.fo==='Produzione aziendale'?`Produzione aziendale – Lotto: ${x.l}`:`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
+function pickp(k,el){const x=el.value?gl(el.value):null;if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),lt(x.p,x));el.value=''}
+function ex(id,i){const x=S.r[id][i];x.ex=x.ex?'':1;save();render()}
 function add(id){
  const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());
  const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&(!r.querySelector('select').value||(r.querySelector('select').value==='x'&&!r.querySelector('.mn').value.trim()))).map(r=>r.querySelector('input').value.trim());
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
- if(o.s)S.f=o.s;
+ if(id==='aut'&&!o.l)o.l=((o.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+(o.d||TD).replace(/-/g,'');if(o.s)S.f=o.s;
  if(ED>=0&&S.r[id]&&S.r[id][ED]){S.r[id][ED]=Object.assign({},S.r[id][ED],o,{mod:new Date().toISOString()});ED=-1;save();msg('Modifica salvata');render();return}
  (S.r[id]=S.r[id]||[]).push(o);if(id==='lot')DL={d:o.d,fo:o.fo,b:o.b,s:o.s};save();
  if(id==='lot'&&o.c==='NC'){pre={d:o.d,p:o.p,fo:o.fo,a:'Prodotto non conforme al ricevimento'};msg('Registrata: compila la non conformità');go('nc');return}
- msg(id==='lot'?'Registrato. Inserisci il prossimo prodotto della stessa consegna':'Registrazione aggiunta');render();if(id==='lot')setTimeout(()=>{const e=$('#f_p');e&&e.focus()},60)}
+ msg(id==='lot'?'Registrato. Inserisci il prossimo prodotto della stessa consegna':id==='aut'?'Registrato con il lotto '+o.l:'Registrazione aggiunta');render();if(id==='lot')setTimeout(()=>{const e=$('#f_p');e&&e.focus()},60)}
 function sameDel(i){const x=S.r.lot[i];DL={d:x.d,fo:x.fo,b:x.b,s:x.s};render();scrollTo(0,0)}
 function ed(i){ED=i;render();scrollTo(0,0)}
 function del(id,i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.r[id].splice(i,1);save();render()}
@@ -120,11 +126,11 @@ function sheet(r){
   const M=(S.g[r.id]||{})[V.m]||{},x=` &nbsp; MESE: <u>${MES[+V.m.slice(5)-1]}</u> &nbsp; ANNO: <u>${V.m.slice(0,4)}</u>`,days=Array.from({length:31},(_,i)=>pad(i+1));
   if(r.id==='temp')h=`<table style="--rh:6.4mm"><tr><th rowspan="2">GG<th colspan="8">Temperatura ottimale frigoriferi<br>T ≤ +4 °C ± 2 °C<th colspan="2">Temperatura ottimale freezer<br>T ≤ −18 °C ± 3 °C<th rowspan="2">FIRMA</tr><tr>${TK.slice(0,7).map(k=>`<th>${k}`).join('')}<th>/<th>FR1<th>/</tr>${days.map(d=>{const q=M[d]||{};return`<tr><td>${d}${TK.slice(0,7).map(k=>`<td>${E(q[k])}`).join('')}<td><td>${E(q.FR1)}<td><td>${E(q.s)}</tr>`}).join('')}</table>`;
   else h=`<table style="--rh:4.1mm"><tr><th rowspan="2">GG<th rowspan="2">Controllo pre-operativo C/NC<th colspan="12">GIORNALIERA<th rowspan="2">FIRMA</tr><tr>${AR.map(a=>`<th style="font-size:7.5px">${a}`).join('')}</tr>${days.map(d=>{const q=M[d]||{};return`<tr><td>${d}<td>${E(q.pre)}${AR.map((a,i)=>`<td>${q['a'+i]?'✓':''}`).join('')}<td>${E(q.s)}</tr>`}).join('')}</table>`;
-  h=`<div class="pg">${hd(r.id==='temp'?x:x)}${h}${gd}${ft}</div>`}
+  h=`<div class="pg">${hd(r.id==='temp'?x:x)}${h}${gd}${r.nofoot?'':ft}</div>`}
  else{
   const rows=[...(S.r[r.id]||[])].sort((a,b)=>(a.d||'').localeCompare(b.d||'')),np=Math.max(1,Math.ceil(rows.length/r.n)),rh=r.o==='l'?Math.floor(135/r.n):Math.floor(205/r.n);
   for(let p=0;p<np;p++){const c=rows.slice(p*r.n,(p+1)*r.n);while(c.length<r.n)c.push({});
-   h+=`<div class="pg">${hd()}<table style="--rh:${rh}mm"><tr>${r.f.map(f=>`<th>${E(f[1])}`).join('')}</tr>${c.map(x=>`<tr>${r.f.map(([k,,t])=>`<td>${E(t==='d'?fmt(x[k]):x[k])}`).join('')}</tr>`).join('')}</table>${gd}${ft}</div>`}}
+   h+=`<div class="pg">${hd()}<table style="--rh:${rh}mm"><tr>${r.f.map(f=>`<th>${E(f[1])}`).join('')}</tr>${c.map(x=>`<tr>${r.f.map(([k,,t])=>`<td>${E(t==='d'?fmt(x[k]):x[k])}`).join('')}</tr>`).join('')}</table>${gd}${r.nofoot?'':ft}</div>`}}
  return{o,h}}
 const rco=()=>'<option value="">Nessuna (inserimento manuale)</option>'+(S.rc||[]).map((x,i)=>`<option value="${i}">${E(x.n)}</option>`).join('');
 const rcm=()=>(S.rc||[]).map((x,i)=>`<div class="it"><span><b>${E(x.n)}</b> – ${E(x.ing.join(', '))}</span><button class="x" onclick="rdel(${i},this)">Elimina</button></div>`).join('');
@@ -143,8 +149,16 @@ function sx(q){q.parentNode.querySelector('.mn').hidden=q.value!=='x';rcu()}
 function rowf(el){const q=el.nextElementSibling,c=q.value;q.innerHTML=lopt(el.value.trim().toLowerCase())+XO;if(c&&[...q.options].some(o=>o.value===c))q.value=c;rcu()}
 function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
  $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>ing(g)).join('');rcu()}
-function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?S.r.lot[v]:null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`);else if(v==='x'&&mn)es.push(`${m}: ${mn}`)});
+function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?gl(v):null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(lt(m,x));else if(v==='x'&&mn)es.push(`${m}: ${mn}`)});
  $('#f_i').value=nm.join(', ');$('#f_e').value=es.join('; ')}
+let SEL={},SM=null;
+function sendView(){SM=SM||V.m;const regs=R.filter(x=>x.k==='g'||x.k==='l');
+ const pl=(n,u,m)=>n+' '+(n===1?u:m),cnt=x=>x.k==='g'?pl(Object.keys(((S.g[x.id]||{})[SM])||{}).length,'giorno','giorni'):pl((S.r[x.id]||[]).length,'registrazione','registrazioni');
+ $('#app').innerHTML=`<p class="st" style="text-align:left">Scegli i registri da inviare: ognuno diventa un PDF e il telefono ti fa scegliere dove mandarli (WhatsApp, email, ecc.).</p>
+<label>Mese per temperature e sanificazioni<input type="month" value="${SM}" onchange="SM=this.value||SM;sendView()"></label>
+${regs.map(x=>`<label class="ck"><input type="checkbox" ${SEL[x.id]?'checked':''} onchange="SEL['${x.id}']=this.checked">${x.doc?'DOC '+x.doc+' · ':''}${E(x.t)} <small>(${cnt(x)})</small></label>`).join('')}
+<button class="b o" onclick="selAll(true)">Seleziona tutti</button><button class="b o" onclick="selAll(false)">Nessuno</button><br><button class="b" onclick="shrMany()">Condividi selezionati</button>`}
+function selAll(v){R.forEach(x=>{if(x.k==='g'||x.k==='l')SEL[x.id]=v});sendView()}
 let RE=-1;
 const rrow=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}"><div class="acts"><span></span><button class="x" onclick="this.closest('.ing').remove()">Togli</button></div></div>`;
 function raddrow(){$('#rrows').insertAdjacentHTML('beforeend',rrow(''));const i=document.querySelectorAll('#rrows input');i[i.length-1].focus()}
@@ -181,6 +195,16 @@ function shareApp(){const u=location.href.split('#')[0],t='App HACCP Il Castella
 boot();
 </script><script>
 window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;a.click()}}:null};
+async function mkpdf(s,name){const el=document.createElement('div');el.style.cssText='position:fixed;left:-9999px;top:0;width:'+(s.o==='landscape'?'281mm':'194mm');el.innerHTML=s.h;document.body.append(el);
+ try{const blob=await html2pdf().set({margin:8,image:{type:'jpeg',quality:.95},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:s.o},pagebreak:{mode:['css']}}).from(el).outputPdf('blob');return new File([blob],name,{type:'application/pdf'})}finally{el.remove()}}
+async function shrMany(){const ids=Object.keys(SEL).filter(k=>SEL[k]);if(!ids.length)return msg('Scegli almeno un registro');
+ if(!window.html2pdf)return msg('Serve la connessione per creare i PDF');
+ msg('Preparo '+ids.length+' PDF…');const files=[];
+ try{for(const id of ids){const r=R.find(x=>x.id===id),keep=V.m;V.m=SM;let s;try{s=sheet(r)}finally{V.m=keep}
+   files.push(await mkpdf(s,`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+SM:''}.pdf`))}
+  if(navigator.canShare&&navigator.canShare({files}))await navigator.share({files,title:'Registri HACCP'});
+  else files.forEach(f=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()})}
+ catch(e){if(e.name!=='AbortError')msg('Condivisione non riuscita')}}
 async function shr(id){
  if(!window.html2pdf)return msg('Serve la connessione per creare il PDF');
  const r=R.find(x=>x.id===id),s=sheet(r),el=document.createElement('div');msg('Preparo il PDF…');
