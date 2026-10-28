@@ -77,7 +77,7 @@ function listHtml(r){const rows=S.r[r.id]||[];
 function refList(){const r=R.find(x=>x.id===V.id),l=$('#lst');if(r&&l)l.innerHTML=listHtml(r)||'<p class="st">Ancora nessuna registrazione.</p>'}
 function listView(r){
  const rows=S.r[r.id]||[],p=pre,eq=ED>=0?rows[ED]:null,bs=(r.id==='lot'&&DL&&!(ED>=0?rows[ED]:null))?DL:{};pre={};
- const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${(r.id==='lot'&&(k==='p'||k==='fo'))||(r.id==='aut'&&k==='p')?'list="dl_'+k+'" autocomplete="off"':''}${(r.id==='lot'||r.id==='aut')&&k==='p'?' oninput="pv()"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>'+((r.id==='lot'||r.id==='aut')&&k==='p'?'<div id="prev"></div>':'')).join('');
+ const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w,!act0(w==='*'?'':w).length)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${(r.id==='lot'&&(k==='p'||k==='fo'))||(r.id==='aut'&&k==='p')?'list="dl_'+k+'" autocomplete="off"':''}${(r.id==='lot'||r.id==='aut')&&k==='p'?' oninput="pv()"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>'+((r.id==='lot'||r.id==='aut')&&k==='p'?'<div id="prev"></div>':'')).join('');
  const bn=(r.id==='lot'&&DL&&!eq)?`<div class="dlb">Consegna aperta: <b>${E(DL.fo)}</b> · fattura/DDT <b>${E(DL.b)}</b> · ${fmt(DL.d)}<br>Compila solo prodotto, lotto e scadenza. Per un altro fornitore o un'altra fattura chiudi la consegna.<br><button class="x" onclick="DL=null;render()">Chiudi consegna</button></div>`:'';
  const dls=r.id==='aut'?`<datalist id="dl_p">${[...new Set([...BASE,...rows.map(x=>x.p).filter(Boolean)])].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`:r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set((k==='p'?[...rows,...(S.r.aut||[])]:rows).map(x=>x[k]).concat(k==='p'?BASE:[]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
  const list=listHtml(r);
@@ -85,9 +85,10 @@ function listView(r){
 const BASE=['Mele','Mirtilli','Prugne','Noci','Uova','Carne di maiale','Agnello'];
 const au=x=>({p:x.p,fo:'Produzione aziendale',b:x.a||'',l:x.l,sc:x.sc});
 const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
-const act0=w=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>(x.p||'').toLowerCase().includes(w)):a};
-const act=w=>{const m=act0(w);return m.length?m:act0('')};
-const lopt=w=>{const a=act(w);return`<option value="">${a.length?'Scegli dai lotti in ingresso':'Nessun lotto attivo (compila il DOC 05)'}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
+const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const mt=(p,w,pt)=>{const a=nz(p).split(' '),b=nz(w).split(' ').filter(Boolean),n=b.length;if(!n)return false;const e=(x,y,l)=>pt&&l?x.startsWith(y):x===y;if(!e(a[0],b[0],n===1))return false;let j=1;for(let i=1;i<a.length&&j<n;i++)if(e(a[i],b[j],j===n-1))j++;return j===n};
+const act0=(w,pt)=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>mt(x.p,w,pt)):a};
+const lopt=(w,all,pt)=>{const a=(all||!w)?act0(''):act0(w,pt);return`<option value="">${a.length?'Scegli il lotto':(all||!w?'Nessun lotto attivo (compila il DOC 05)':'Nessun lotto per questo ingrediente')}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
 const lt=(m,x)=>x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l}`:`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`;
 function pick(k,el){const x=el.value?gl(el.value):null;if(!x)return;$('#f_'+k).value=x.fo==='Produzione aziendale'?`Produzione aziendale – Lotto: ${x.l}`:`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
 function pickp(k,el){const x=el.value?gl(el.value):null;if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),lt(x.p,x));el.value=''}
@@ -143,7 +144,7 @@ function sheet(r){
  return{o,h}}
 const rco=()=>'<option value="">Nessuna (inserimento manuale)</option>'+(S.rc||[]).map((x,i)=>`<option value="${i}">${E(x.n)}</option>`).join('');
 const rcm=()=>(S.rc||[]).map((x,i)=>`<div class="it"><span><b>${E(x.n)}</b> – ${E(x.ing.join(', '))}</span><button class="x" onclick="rdel(${i},this)">Elimina</button></div>`).join('');
-const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><button class="b o" onclick="go('ric')">Crea o modifica le ricette</button><h2>Ingredienti e lotti</h2><div id="rcl">${ing('')}</div><button class="b o" onclick="addIng('')">+ Aggiungi ingrediente</button>`;
+const rc1=()=>`<label>Ricetta salvata<select id="rc" onchange="rcs(this.value)">${rco()}</select></label><button class="b o" onclick="go('ric')">Crea o modifica le ricette</button><h2>Ingredienti e lotti</h2>${dlIng()}<div id="rcl">${ing('')}</div><button class="b o" onclick="addIng('')">+ Aggiungi ingrediente</button>`;
 const rc2=()=>'';
 function rref(){$('#rc').innerHTML=rco();$('#rl').innerHTML=rcm()}
 function rsv(){const n=$('#f_p').value.trim(),g=$('#f_i').value.split(/[;,\n]/).map(t=>t.trim()).filter(Boolean);
@@ -151,16 +152,18 @@ function rsv(){const n=$('#f_p').value.trim(),g=$('#f_i').value.split(/[;,\n]/).
  S.rc=S.rc||[];const k=S.rc.findIndex(x=>x.n.toLowerCase()===n.toLowerCase()),q={n,ing:g};k<0?S.rc.push(q):S.rc[k]=q;save();rref();msg('Ricetta salvata')}
 function rdel(i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.rc.splice(i,1);save();rref();$('#rcl').innerHTML=''}
 const XO='<option value="x">Altro: lo scrivo a mano</option>';
-const ing=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}" oninput="rowf(this)"><select onchange="sx(this)">${lopt(String(n).toLowerCase())}${XO}</select><div class="rl">${rl(String(n).toLowerCase())}</div><input class="mn" placeholder="Ditta, documento, lotto" hidden oninput="rcu()"><div class="acts"><button class="x" onclick="dupRow(this)">+ lotto</button><button class="x" onclick="this.closest('.ing').remove();rcu()">Togli</button></div></div>`;
+const XA='<option value="all">Mostra tutti i lotti…</option>';
+const dlIng=()=>`<datalist id="dl_ing">${[...new Set([...(S.r.lot||[]),...(S.r.aut||[])].map(x=>x.p).filter(Boolean))].sort().map(v=>`<option value="${E(v)}">`).join('')}</datalist>`;
+const ing=n=>`<div class="ing"><input placeholder="Ingrediente" list="dl_ing" value="${E(n)}" oninput="rowf(this)"><select onchange="sx(this)">${lopt(n,0,0)}${XO}${XA}</select><div class="rl">${rl(n,0)}</div><input class="mn" placeholder="Ditta, documento, lotto" hidden oninput="rcu()"><div class="acts"><button class="x" onclick="dupRow(this)">+ lotto</button><button class="x" onclick="this.closest('.ing').remove();rcu()">Togli</button></div></div>`;
 function addIng(n){$('#rcl').insertAdjacentHTML('beforeend',ing(n))}
 function dupRow(b){const r=b.closest('.ing');r.insertAdjacentHTML('afterend',ing(r.querySelector('input').value))}
-function sx(q){q.parentNode.querySelector('.mn').hidden=q.value!=='x';rcu()}
-const rl=w=>{const a=w?act0(w):[];return a.length?'<div class="rlh">Lotti attivi (tocca Usa, oppure Finito se è esaurito):</div>'+a.map(([x,k])=>`<div class="pl"><span>lotto <b>${E(x.l)}</b>${x.sc?' · scad. '+fmt(x.sc):''}${x.fo==='Produzione aziendale'?' · aziendale':''}</span><span><button class="x" onclick="usa(this,'${k}')">Usa</button><button class="x" onclick="fin('${k}')">Finito</button></span></div>`).join(''):''};
-function rowRefresh(r){const i=r.querySelector('input'),q=r.querySelector('select'),c=q.value,w=i.value.trim().toLowerCase();q.innerHTML=lopt(w)+XO;if(c&&[...q.options].some(o=>o.value===c))q.value=c;r.querySelector('.rl').innerHTML=rl(w)}
-function rowf(el){rowRefresh(el.closest('.ing'));rcu()}
+function sx(q){if(q.value==='all'){q.dataset.all='1';rowRefresh(q.closest('.ing'));return}q.parentNode.querySelector('.mn').hidden=q.value!=='x';rcu()}
+const rl=(w,pt)=>{const a=w?act0(w,pt):[];return a.length?'<div class="rlh">Lotti attivi (tocca Usa, oppure Finito se è esaurito):</div>'+a.map(([x,k])=>`<div class="pl"><span>lotto <b>${E(x.l)}</b>${x.sc?' · scad. '+fmt(x.sc):''}${x.fo==='Produzione aziendale'?' · aziendale':''}</span><span><button class="x" onclick="usa(this,'${k}')">Usa</button><button class="x" onclick="fin('${k}')">Finito</button></span></div>`).join(''):''};
+function rowRefresh(r){const i=r.querySelector('input'),q=r.querySelector('select'),c=q.value,w=i.value.trim(),all=q.dataset.all==='1',pt=r.dataset.pt==='1';q.innerHTML=lopt(w,all,pt)+XO+(all?'':XA);if(c&&[...q.options].some(o=>o.value===c))q.value=c;r.querySelector('.rl').innerHTML=rl(w,pt)}
+function rowf(el){const r=el.closest('.ing');r.dataset.pt='1';rowRefresh(r);rcu()}
 function usa(b,k){const r=b.closest('.ing');r.querySelector('select').value=k;r.querySelector('.mn').hidden=true;rcu()}
 function fin(k){const id=String(k)[0]==='a'?'aut':'lot',i=id==='aut'?+String(k).slice(1):+k;S.r[id][i].ex=1;save();if($('#rcl')){document.querySelectorAll('#rcl .ing').forEach(rowRefresh);rcu()}if($('#prev'))pv();if($('#lst'))refList()}
-function pv(){const el=$('#prev');if(!el)return;const w=(($('#f_p')||{}).value||'').trim().toLowerCase(),a=w.length>=2?act0(w):[];
+function pv(){const el=$('#prev');if(!el)return;const w=(($('#f_p')||{}).value||'').trim().toLowerCase(),a=w.length>=2?act0(w,true):[];
  el.innerHTML=a.length?`<div class="dlb">Lotti ancora attivi di questo prodotto:${a.map(([x,k])=>`<div class="pl"><span>${E(x.p)} · ${E(x.fo)} · lotto <b>${E(x.l)}</b>${x.sc?' · scad. '+fmt(x.sc):''}</span><button class="x" onclick="fin('${k}')">Finito</button></div>`).join('')}</div>`:''}
 let SHEX={};
 function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
@@ -176,12 +179,12 @@ ${regs.map(x=>`<label class="ck"><input type="checkbox" ${SEL[x.id]?'checked':''
 <button class="b o" onclick="selAll(true)">Seleziona tutti</button><button class="b o" onclick="selAll(false)">Nessuno</button><br><button class="b" onclick="shrMany()">Condividi selezionati</button>`}
 function selAll(v){R.forEach(x=>{if(x.k==='g'||x.k==='l')SEL[x.id]=v});sendView()}
 let RE=-1;
-const rrow=n=>`<div class="ing"><input placeholder="Ingrediente" value="${E(n)}"><div class="acts"><span></span><button class="x" onclick="this.closest('.ing').remove()">Togli</button></div></div>`;
+const rrow=n=>`<div class="ing"><input placeholder="Ingrediente" list="dl_ing" value="${E(n)}"><div class="acts"><span></span><button class="x" onclick="this.closest('.ing').remove()">Togli</button></div></div>`;
 function raddrow(){$('#rrows').insertAdjacentHTML('beforeend',rrow(''));const i=document.querySelectorAll('#rrows input');i[i.length-1].focus()}
 function recView(){const x=RE>=0?(S.rc||[])[RE]:null,L=S.rc||[];
- $('#app').innerHTML=`<p class="st" style="text-align:left">Scrivi la ricetta una sola volta, senza lotti. Nel registro produzioni la scegli e inserisci solo i dati di quel giorno.</p>
+ $('#app').innerHTML=`<p class="st" style="text-align:left">Scrivi la ricetta una sola volta, senza lotti. Scrivi gli ingredienti come compaiono nel registro dei lotti (per esempio Olio extravergine di oliva): i lotti si agganciano al nome. Nel registro produzioni la scegli e inserisci solo i dati di quel giorno.</p>
 <label>Nome della ricetta<input id="rn" placeholder="Nome del prodotto" value="${E(x?x.n:'')}"></label>
-<h2>Ingredienti</h2><div id="rrows">${(x?x.ing:['','','']).map(g=>rrow(g)).join('')}</div>
+<h2>Ingredienti</h2>${dlIng()}<div id="rrows">${(x?x.ing:['','','']).map(g=>rrow(g)).join('')}</div>
 <button class="b o" onclick="raddrow()">+ Aggiungi ingrediente</button><br><button class="b" onclick="rsave()">${x?'Salva modifiche':'Salva ricetta'}</button>${x?'<button class="b o" onclick="RE=-1;recView()">Annulla</button>':''}
 <h2>Ricette salvate (${L.length})</h2>`+(L.map((r,i)=>`<div class="it"><span><b>${E(r.n)}</b><br>${E(r.ing.join(', '))}</span><span><button class="x" onclick="RE=${i};recView();scrollTo(0,0)">Modifica</button><button class="x" onclick="rdel2(${i},this)">Elimina</button></span></div>`).join('')||'<p class="st">Nessuna ricetta salvata.</p>')}
 function rsave(){const n=$('#rn').value.trim(),g=[...document.querySelectorAll('#rrows input')].map(e=>e.value.trim()).filter(Boolean);
