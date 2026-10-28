@@ -24,6 +24,7 @@ input.bad{border-color:var(--bad);background:var(--wb);color:var(--bad);font-wei
 .ck small{color:var(--mut)}
 .dtl{width:100%;font-size:14px;color:var(--mut);padding:4px 0}.dtl[hidden]{display:none}
 .pl{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:2px 0;font-size:14px}.rlh{font-size:13px;color:var(--mut)}.rl{margin:0}
+.gr{border:1px solid var(--line);border-radius:8px;background:var(--card);margin:0 0 8px;padding:0 10px}.gr summary{padding:12px 0;font-size:15px}.gr .it:last-child{border-bottom:0}.seg{display:flex;flex-wrap:wrap}.bd{color:var(--bad)}#qs{margin:6px 0 10px}
 .dlb{background:var(--card);border:1px solid var(--ac);border-radius:8px;padding:10px;margin:0 0 10px;font-size:14px}
 .it{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0;font-size:14px}
 .x{background:none;border:0;color:var(--bad);font:14px inherit;min-height:40px}
@@ -72,8 +73,19 @@ function render(){
 const rec=(id=V.id)=>((S.g[id]||{})[V.m]||{})[V.d]||{};
 const bad=(k,v)=>v!==undefined&&v!==''&&!isNaN(v)&&(k==='FR1'?+v>-15:+v>6);
 function listHtml(r){const rows=S.r[r.id]||[];
- const list=rows.map((x,i)=>[x,i]).filter(([x])=>SHEX[r.id]||!x.ex).sort((a,b)=>(b[0].d||'').localeCompare(a[0].d||'')).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.ex?' · ESAURITO':''):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}</div></div>`).join('');
- const nEx=rows.filter(x=>x.ex).length;return (nEx?`<button class="b o" onclick="SHEX['${r.id}']=!SHEX['${r.id}'];refList()">${SHEX[r.id]?'Nascondi':'Mostra'} esauriti (${nEx})</button>`:'')+list}
+ const sdl=sc=>{const d=Math.round((new Date(sc)-new Date(TD))/864e5);return d<0?' · <b class="bd">SCADUTO</b>':d<=7?' · <b class="bd">scade tra '+d+(d===1?' giorno':' giorni')+'</b>':''};
+ const byD=(a,b)=>(b[0].d||'').localeCompare(a[0].d||'');
+ const mk=arr=>arr.slice().sort(byD).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.sc?' · entro '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}</div></div>`).join('');
+ const q=nz(Q[r.id]||'').split(' ').filter(Boolean),g=(r.id==='lot'||r.id==='aut')&&VM[r.id]!=='d';
+ let pr=rows.map((x,i)=>[x,i]).filter(([x])=>SHEX[r.id]||!x.ex);
+ if(q.length)pr=pr.filter(([x])=>{const t=nz(r.f.map(([k])=>x[k]).join(' '));return q.every(w=>t.includes(w))});
+ const nEx=rows.filter(x=>x.ex).length;let body;
+ if(g){const gp={};pr.forEach(p=>{const k=nz(p[0].p)||'senza nome';(gp[k]=gp[k]||{n:p[0].p||'(senza nome)',a:[]}).a.push(p)});
+  body=Object.values(gp).sort((x,y)=>nz(x.n).localeCompare(nz(y.n))).map(g=>{const at=g.a.filter(([x])=>!x.ex).length,sc=g.a.filter(([x])=>!x.ex&&x.sc).map(([x])=>x.sc).sort()[0];
+   return `<details class="gr"${q.length?' open':''}><summary><b>${E(g.n)}</b> · ${at} ${at===1?'attivo':'attivi'}${g.a.length>at?' · '+(g.a.length-at)+(g.a.length-at===1?' esaurito':' esauriti'):''}${sc?' · scad. '+fmt(sc):''}</summary>${mk(g.a)}</details>`}).join('')}
+ else{const lim=LIM[r.id]||40,srt=pr.slice().sort(byD);body=mk(srt.slice(0,lim))+(srt.length>lim?`<button class="b o" onclick="LIM['${r.id}']=(LIM['${r.id}']||40)+40;refList()">Mostra altri (${srt.length-lim})</button>`:'')}
+ const bar='<div class="seg">'+((r.id==='lot'||r.id==='aut')?`<button class="b${g?'':' o'}" onclick="VM['${r.id}']='g';refList()">Per prodotto</button><button class="b${g?' o':''}" onclick="VM['${r.id}']='d';refList()">Per data</button>`:'')+(nEx?`<button class="b o" onclick="SHEX['${r.id}']=!SHEX['${r.id}'];refList()">${SHEX[r.id]?'Nascondi':'Mostra'} esauriti (${nEx})</button>`:'')+'</div>';
+ return bar+(q.length?`<p class="st" style="text-align:left">${pr.length} ${pr.length===1?'risultato':'risultati'}</p>`:'')+body}
 function refList(){const r=R.find(x=>x.id===V.id),l=$('#lst');if(r&&l)l.innerHTML=listHtml(r)||'<p class="st">Ancora nessuna registrazione.</p>'}
 function listView(r){
  const rows=S.r[r.id]||[],p=pre,eq=ED>=0?rows[ED]:null,bs=(r.id==='lot'&&DL&&!(ED>=0?rows[ED]:null))?DL:{};pre={};
@@ -81,7 +93,7 @@ function listView(r){
  const bn=(r.id==='lot'&&DL&&!eq)?`<div class="dlb">Consegna aperta: <b>${E(DL.fo)}</b> · fattura/DDT <b>${E(DL.b)}</b> · ${fmt(DL.d)}<br>Compila solo prodotto, lotto e scadenza. Per un altro fornitore o un'altra fattura chiudi la consegna.<br><button class="x" onclick="DL=null;render()">Chiudi consegna</button></div>`:'';
  const dls=r.id==='aut'?`<datalist id="dl_p">${[...new Set([...BASE,...rows.map(x=>x.p).filter(Boolean)])].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`:r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set((k==='p'?[...rows,...(S.r.aut||[])]:rows).map(x=>x[k]).concat(k==='p'?BASE:[]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
  const list=listHtml(r);
- $('#app').innerHTML=`<div><button class="b o" onclick="document.getElementById('reg').scrollIntoView()">Vedi registrazioni (${rows.length})</button><button class="b o" onclick="vw('${r.id}')">Visualizza scheda</button></div>${r.id==='prod'?rc1():''}${bn}${inp}${dls}<button class="b" onclick="add('${r.id}')">${eq?'Salva modifiche':'Aggiungi'}</button>${eq?'<button class="b o" onclick="ED=-1;render()">Annulla</button>':''}${r.id==='prod'?rc2():''}<h2 id="reg">Registrazioni (${rows.length})</h2><div id="lst">${list||'<p class="st">Ancora nessuna registrazione.</p>'}</div>${pbtn(r)}`}
+ $('#app').innerHTML=`<div><button class="b o" onclick="document.getElementById('reg').scrollIntoView()">Vedi registrazioni (${rows.length})</button><button class="b o" onclick="vw('${r.id}')">Visualizza scheda</button></div>${r.id==='prod'?rc1():''}${bn}${inp}${dls}<button class="b" onclick="add('${r.id}')">${eq?'Salva modifiche':'Aggiungi'}</button>${eq?'<button class="b o" onclick="ED=-1;render()">Annulla</button>':''}${r.id==='prod'?rc2():''}<h2 id="reg">Registrazioni (${rows.length})</h2><input id="qs" type="search" placeholder="Cerca per prodotto, fornitore o lotto" value="${E(Q[r.id]||'')}" oninput="Q['${r.id}']=this.value;LIM['${r.id}']=40;refList()"><div id="lst">${list||'<p class="st">Ancora nessuna registrazione.</p>'}</div>${pbtn(r)}`}
 const BASE=['Mele','Mirtilli','Prugne','Noci','Uova','Carne di maiale','Agnello'];
 const au=x=>({p:x.p,fo:'Produzione aziendale',b:x.a||'',l:x.l,sc:x.sc});
 const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
@@ -165,7 +177,7 @@ function usa(b,k){const r=b.closest('.ing');r.querySelector('select').value=k;r.
 function fin(k){const id=String(k)[0]==='a'?'aut':'lot',i=id==='aut'?+String(k).slice(1):+k;S.r[id][i].ex=1;save();if($('#rcl')){document.querySelectorAll('#rcl .ing').forEach(rowRefresh);rcu()}if($('#prev'))pv();if($('#lst'))refList()}
 function pv(){const el=$('#prev');if(!el)return;const w=(($('#f_p')||{}).value||'').trim().toLowerCase(),a=w.length>=2?act0(w,true):[];
  el.innerHTML=a.length?`<div class="dlb">Lotti ancora attivi di questo prodotto:${a.map(([x,k])=>`<div class="pl"><span>${E(x.p)} · ${E(x.fo)} · lotto <b>${E(x.l)}</b>${x.sc?' · scad. '+fmt(x.sc):''}</span><button class="x" onclick="fin('${k}')">Finito</button></div>`).join('')}</div>`:''}
-let SHEX={};
+let SHEX={},Q={},VM={},LIM={};
 function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
  $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>ing(g)).join('');rcu()}
 function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?gl(v):null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(lt(m,x));else if(v==='x'&&mn)es.push(`${m}: ${mn}`)});
