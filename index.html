@@ -36,7 +36,7 @@ h2{font-size:15px;margin:18px 0 6px}
 #spl{position:fixed;inset:0;z-index:99;background:#1f3b63;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s;text-align:center;padding:20px}#spl b{font-size:22px;letter-spacing:.5px}#spl span{font-size:16px;opacity:.9}
 #vw{position:fixed;inset:0;z-index:9;overflow:auto;background:var(--bg);padding:calc(8px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px))}#vw[hidden]{display:none}#vw .pg{min-width:680px;margin:10px 0;padding:6px}
 @media print{body>*:not(#pr){display:none!important}#pr{display:block}body{background:#fff}}
-</style><style id="pg"></style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1f3b63"><link rel="apple-touch-icon" href="icon-192.png"><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script></head>
+</style><style id="pg"></style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1f3b63"><link rel="apple-touch-icon" href="icon-192.png"><script src="pdf-lib.min.js"></script></head>
 <body>
 <div id="spl"><svg width="120" height="120" viewBox="0 0 100 100" aria-hidden="true"><rect x="28" y="25" width="10" height="50" fill="#fff"/><rect x="62" y="25" width="10" height="50" fill="#fff"/><rect x="38" y="47" width="24" height="6" fill="#fff"/></svg><b>HACCP</b><span>Realizzata da Geremia Saltarelli</span></div>
 <div class="top"><button id="bk" class="bk" onclick="go(null)" hidden>‹ Tutti i registri</button><h1 id="ti">HACCP · Il Castellaccio</h1></div>
@@ -226,25 +226,59 @@ function shareApp(){const u=location.href.split('#')[0],t='App HACCP Il Castella
 boot();
 </script><script>
 window.claude={use:async n=>n==='downloads'?{save:async({filename,data})=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;a.click()}}:null};
-async function mkpdf(s,name){const el=document.createElement('div');el.style.cssText='position:fixed;left:-9999px;top:0;width:'+(s.o==='landscape'?'281mm':'194mm');el.innerHTML=s.h;document.body.append(el);
- try{const blob=await html2pdf().set({margin:8,image:{type:'jpeg',quality:.95},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:s.o},pagebreak:{mode:['css']}}).from(el).outputPdf('blob');return new File([blob],name,{type:'application/pdf'})}finally{el.remove()}}
+async function mkpdf(r,name){
+ const {PDFDocument,StandardFonts,rgb}=PDFLib,doc=await PDFDocument.create(),F=await doc.embedFont(StandardFonts.Helvetica),B=await doc.embedFont(StandardFonts.HelveticaBold);
+ const land=r.o==='l',W=land?841.89:595.28,H=land?595.28:841.89,M=28,CW=W-2*M,K=rgb(0,0,0),HB=rgb(.79,.84,.9),HF=rgb(.875,.906,.945);
+ const cc={},ok=c=>{if(c in cc)return cc[c];try{F.encodeText(c);cc[c]=true}catch(e){cc[c]=false}return cc[c]};
+ const T=t=>[...String(t??'').replace(/[\r\n]+/g,' ').replace(/✓/g,'v').replace(/≤/g,'<=').replace(/−/g,'-').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,'...')].map(c=>ok(c)?c:'?').join('');
+ const wrap=(t,f,sz,w)=>{const out=[];let line='';for(const word of T(t).split(' ')){let wd=word;while(wd.length>1&&f.widthOfTextAtSize(wd,sz)>w){let k=wd.length;while(k>1&&f.widthOfTextAtSize(wd.slice(0,k),sz)>w)k--;if(line){out.push(line);line=''}out.push(wd.slice(0,k));wd=wd.slice(k)}const tt=line?line+' '+wd:wd;if(f.widthOfTextAtSize(tt,sz)<=w)line=tt;else{if(line)out.push(line);line=wd}}out.push(line);return out};
+ let pg;const add=()=>{pg=doc.addPage([W,H])};
+ const rect=(x,y,w,h,fill)=>pg.drawRectangle({x,y:H-y-h,width:w,height:h,borderColor:K,borderWidth:.6,...(fill?{color:fill}:{})});
+ const txt=(s,x,y,f,sz)=>pg.drawText(s,{x,y:H-y-sz*.82,size:sz,font:f,color:K});
+ const box=(x,y,w,h,t,o={})=>{rect(x,y,w,h,o.fill);if(t===undefined||t===null||t==='')return;const f=o.b?B:F;let sz=o.sz||8,ls;
+  for(;;){ls=wrap(t,f,sz,w-5);if(ls.length*sz*1.15<=h-2||sz<=5)break;sz-=.5}
+  const mx=Math.max(1,Math.floor((h-2)/(sz*1.15)));if(ls.length>mx){ls=ls.slice(0,mx);ls[mx-1]=ls[mx-1].slice(0,-1)+'.'}
+  const y0=y+(h-ls.length*sz*1.15)/2;ls.forEach((l,i)=>txt(l,o.l?x+3:x+(w-f.widthOfTextAtSize(l,sz))/2,y0+i*sz*1.15,f,sz))};
+ const head=t=>{box(M,M,CW,18,'',{fill:HF});txt('AZ. AGR. IL CASTELLACCIO',M+6,M+4,B,10);const d=r.doc?'DOC '+r.doc:'';if(d)txt(d,M+CW-6-B.widthOfTextAtSize(d,10),M+4,B,10);box(M,M+18,CW,22,t,{b:1,sz:11});return M+50};
+ const GL=r.g?wrap('Guida alla compilazione: '+r.g,F,8,CW):[];
+ const guide=y=>GL.forEach((l,i)=>txt(l,M,y+i*10,F,8));
+ const foot=()=>{if(r.nofoot)return;const y=H-M-46,w1=CW*.45;rect(M,y,w1,46);rect(M+w1,y,CW-w1,46);
+  [['Elaborato da:',0],['Grow, al fianco delle Aziende',1]].forEach(([t,b],i)=>{const f=b?B:F;txt(t,M+(w1-f.widthOfTextAtSize(t,8))/2,y+14+i*11,f,8)});
+  ['Grow S.r.l.','Viale della Resistenza, 69 - 64025 Pineto (TE)','P. Iva 02063470674','info@growcf.it - www.growcf.it'].forEach((t,i)=>txt(t,M+w1+(CW-w1-F.widthOfTextAtSize(t,8))/2,y+6+i*9.5,F,8))};
+ const avail=(y,hh)=>H-M-(r.nofoot?0:54)-(GL.length?GL.length*10+10:0)-y-hh-4;
+ const tick=(x,y,w,h)=>{const cx=x+w/2,cy=H-y-h/2;pg.drawLine({start:{x:cx-3.5,y:cy},end:{x:cx-1,y:cy-3},thickness:1,color:K});pg.drawLine({start:{x:cx-1,y:cy-3},end:{x:cx+4,y:cy+4},thickness:1,color:K})};
+ if(r.k==='g'){const mo=V.m,M0=(S.g[r.id]||{})[mo]||{};add();let y=head(`${r.t}   MESE: ${MES[+mo.slice(5)-1].toUpperCase()}   ANNO: ${mo.slice(0,4)}`);
+  if(r.id==='temp'){const gw=26,dw=36,fw=CW-gw-10*dw,h1=26,h2=14,rh=avail(y,h1+h2)/31,DV=['F1','F2','F3','F4','F5','F6','F7','','FR1',''];
+   box(M,y,gw,h1+h2,'GG',{b:1,sz:8,fill:HB});box(M+gw,y,8*dw,h1,'Temperatura ottimale frigoriferi  T <= +4 °C ± 2 °C',{b:1,sz:8,fill:HB});box(M+gw+8*dw,y,2*dw,h1,'Temperatura ottimale freezer  T <= -18 °C ± 3 °C',{b:1,sz:7,fill:HB});box(M+gw+10*dw,y,fw,h1+h2,'FIRMA',{b:1,sz:8,fill:HB});
+   DV.forEach((k,i)=>box(M+gw+i*dw,y+h1,dw,h2,k||'/',{b:1,sz:8,fill:HB}));y+=h1+h2;
+   for(let d=1;d<=31;d++){const q=M0[pad(d)]||{};box(M,y,gw,rh,pad(d),{b:1,sz:7.5});DV.forEach((k,i)=>box(M+gw+i*dw,y,dw,rh,k?q[k]:'',{sz:8}));box(M+gw+10*dw,y,fw,rh,q.s||'',{sz:8});y+=rh}
+   y+=8}
+  else{const gw=26,pw=66,sw=56,aw=(CW-gw-pw-sw)/12,h1=14,h2=48,rh=avail(y,h1+h2)/31;
+   box(M,y,gw,h1+h2,'GG',{b:1,sz:8,fill:HB});box(M+gw,y,pw,h1+h2,'CONTROLLO PRE-OPERATIVO C/NC',{b:1,sz:6.5,fill:HB});box(M+gw+pw,y,12*aw,h1,'GIORNALIERA',{b:1,sz:8,fill:HB});box(M+gw+pw+12*aw,y,sw,h1+h2,'FIRMA',{b:1,sz:8,fill:HB});
+   AR.forEach((a,i)=>box(M+gw+pw+i*aw,y+h1,aw,h2,a,{b:1,sz:6.5,fill:HB}));y+=h1+h2;
+   for(let d=1;d<=31;d++){const q=M0[pad(d)]||{};box(M,y,gw,rh,pad(d),{b:1,sz:7});box(M+gw,y,pw,rh,q.pre||'',{sz:7.5});AR.forEach((a,i)=>{box(M+gw+pw+i*aw,y,aw,rh,'');if(q['a'+i])tick(M+gw+pw+i*aw,y,aw,rh)});box(M+gw+pw+12*aw,y,sw,rh,q.s||'',{sz:7.5});y+=rh}
+   y+=8}
+  guide(y);foot()}
+ else{const rows=(S.r[r.id]||[]).slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')),n=r.n,np=Math.max(1,Math.ceil(rows.length/n)),LG=/^(p|i|e|a|z|o|m)$/,
+   wt=r.f.map(([k,l,t])=>t==='d'?1:k==='s'?1.1:LG.test(k)?2.2:1.4),sm=wt.reduce((a,b)=>a+b,0),cw=wt.map(v=>v/sm*CW);
+  for(let p=0;p<np;p++){add();let y=head(r.t);const hh=36,rh=avail(y,hh)/n;let x=M;
+   r.f.forEach(([k,l],i)=>{box(x,y,cw[i],hh,l,{b:1,sz:7.5,fill:HB});x+=cw[i]});y+=hh;
+   for(let i=0;i<n;i++){const row=rows[p*n+i]||{};x=M;r.f.forEach(([k,l,t],j)=>{box(x,y,cw[j],rh,t==='d'?fmt(row[k]):row[k],{sz:8.5,l:t!=='d'&&LG.test(k)});x+=cw[j]});y+=rh}
+   guide(y+8);foot()}}
+ return new File([await doc.save()],name,{type:'application/pdf'})}
 async function shrMany(){const ids=Object.keys(SEL).filter(k=>SEL[k]);if(!ids.length)return msg('Scegli almeno un registro');
- if(!window.html2pdf)return msg('Serve la connessione per creare i PDF');
- msg('Preparo '+ids.length+' PDF…');const files=[];
- try{for(const id of ids){const r=R.find(x=>x.id===id),keep=V.m;V.m=SM;let s;try{s=sheet(r)}finally{V.m=keep}
-   files.push(await mkpdf(s,`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+SM:''}.pdf`))}
-  if(navigator.canShare&&navigator.canShare({files}))await navigator.share({files,title:'Registri HACCP'});
-  else files.forEach(f=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()})}
+ if(!window.PDFLib)return msg('Libreria PDF non caricata: riapri l’app con la connessione attiva');
+ msg('Preparo '+ids.length+' PDF…');const files=[],keep=V.m;
+ try{V.m=SM;for(const id of ids){const r=R.find(x=>x.id===id);files.push(await mkpdf(r,`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+SM:''}.pdf`))}}catch(e){V.m=keep;return msg('Non sono riuscito a creare i PDF')}
+ V.m=keep;
+ try{if(navigator.canShare&&navigator.canShare({files}))await navigator.share({files,title:'Registri HACCP'});else files.forEach(f=>{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()})}
  catch(e){if(e.name!=='AbortError')msg('Condivisione non riuscita')}}
 async function shr(id){
- if(!window.html2pdf)return msg('Serve la connessione per creare il PDF');
- const r=R.find(x=>x.id===id),s=sheet(r),el=document.createElement('div');msg('Preparo il PDF…');
- el.style.cssText='position:fixed;left:-9999px;top:0;width:'+(s.o==='landscape'?'281mm':'194mm');el.innerHTML=s.h;document.body.append(el);
- try{const blob=await html2pdf().set({margin:8,image:{type:'jpeg',quality:.95},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:s.o},pagebreak:{mode:['css']}}).from(el).outputPdf('blob');
-  const n=`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.pdf`,f=new File([blob],n,{type:'application/pdf'});
-  if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:r.t});
-  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click()}}
- catch(e){if(e.name!=='AbortError')msg('Condivisione non riuscita')}finally{el.remove()}}
+ if(!window.PDFLib)return msg('Libreria PDF non caricata: riapri l’app con la connessione attiva');
+ const r=R.find(x=>x.id===id);msg('Preparo il PDF…');let f;
+ try{f=await mkpdf(r,`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.pdf`)}catch(e){return msg('Non sono riuscito a creare il PDF')}
+ try{if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:r.t});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()}}
+ catch(e){if(e.name!=='AbortError')msg('Condivisione non riuscita')}}
 </script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
