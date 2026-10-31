@@ -102,7 +102,8 @@ const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f
 const mt=(p,w,pt)=>{const a=nz(p).split(' '),b=nz(w).split(' ').filter(Boolean),n=b.length;if(!n)return false;const e=(x,y,l)=>pt&&l?x.startsWith(y):x===y;if(!e(a[0],b[0],n===1))return false;let j=1;for(let i=1;i<a.length&&j<n;i++)if(e(a[i],b[j],j===n-1))j++;return j===n};
 const act0=(w,pt)=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>mt(x.p,w,pt)):a};
 const lopt=(w,all,pt)=>{const a=(all||!w)?act0(''):act0(w,pt);return`<option value="">${a.length?'Scegli il lotto':(all||!w?'Nessun lotto attivo (compila il DOC 05)':'Nessun lotto per questo ingrediente')}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
-const lt=(m,x)=>x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l}`:`${m}: ${x.fo}, doc. ${x.b}, lotto ${x.l}`;
+const BL='______________';
+const lt=(m,x)=>x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l||BL}`:`${m}: ${x.fo}, doc. ${x.b||BL}, lotto ${x.l||BL}`;
 function pick(k,el){const x=el.value?gl(el.value):null;if(!x)return;$('#f_'+k).value=x.fo==='Produzione aziendale'?`Produzione aziendale – Lotto: ${x.l}`:`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
 function pickp(k,el){const x=el.value?gl(el.value):null;if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),lt(x.p,x));el.value=''}
 function ex(id,i){const x=S.r[id][i];x.ex=x.ex?'':1;save();render()}
@@ -181,14 +182,14 @@ function pv(){const el=$('#prev');if(!el)return;const w=(($('#f_p')||{}).value||
 let SHEX={},Q={},VM={},LIM={};
 function rcs(i){const x=(S.rc||[])[i],d=$('#rcl');if(!x){d.innerHTML=ing('');rcu();return}
  $('#f_p').value=x.n;d.innerHTML=x.ing.map(g=>ing(g)).join('');rcu()}
-function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?gl(v):null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(lt(m,x));else if(v==='x'&&mn)es.push(`${m}: ${mn}`)});
+function rcu(){const nm=[],es=[];document.querySelectorAll('#rcl .ing').forEach(r=>{const n=r.querySelector('input').value.trim(),v=r.querySelector('select').value,mn=r.querySelector('.mn').value.trim(),x=(v&&v!=='x')?gl(v):null,m=n||(x?x.p:'');if(m&&!nm.includes(m))nm.push(m);if(x)es.push(lt(m,x));else if(v==='x'&&mn)es.push(`${m}: ${mn}`);else if(m)es.push(`${m}: ${BL}`)});
  $('#f_i').value=nm.join(', ');$('#f_e').value=es.join('; ')}
 function edRows(x){const d=$('#rcl');if(!d)return;
  const parts=String(x.e||'').split(/;\s*/).map(t=>t.trim()).filter(Boolean).map(t=>{const k=t.indexOf(': ');return k>0?{n:t.slice(0,k),m:t.slice(k+2)}:{n:'',m:t}}),
  names=String(x.i||'').split(/[;,\n]/).map(t=>t.trim()).filter(Boolean),rows=[],used=new Set();
  names.forEach(n=>{const ps=parts.filter(p=>p.n.toLowerCase()===n.toLowerCase());if(ps.length)ps.forEach(p=>{rows.push(p);used.add(p)});else rows.push({n,m:''})});
  parts.forEach(p=>{if(!used.has(p))rows.push(p)});
- if(!rows.length)return;
+ rows.forEach(r=>{if(/^_+$/.test(r.m))r.m=''});if(!rows.length)return;
  d.innerHTML=rows.map(r=>ing(r.n)).join('');
  [...d.querySelectorAll('.ing')].forEach((el,i)=>{const r=rows[i];if(!r.m)return;el.querySelector('select').value='x';const mn=el.querySelector('.mn');mn.hidden=false;mn.value=r.m})}
 let SEL={},SM=null;
