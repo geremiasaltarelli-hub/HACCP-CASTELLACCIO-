@@ -76,7 +76,7 @@ function listHtml(r){const rows=S.r[r.id]||[];
  const sdl=sc=>{const d=Math.round((new Date(sc)-new Date(TD))/864e5);return d<0?' · <b class="bd">SCADUTO</b>':d<=7?' · <b class="bd">scade tra '+d+(d===1?' giorno':' giorni')+'</b>':''};
  const byD=(a,b)=>(b[0].d||'').localeCompare(a[0].d||'');
  const byE=(a,b)=>{const x=a[0],y=b[0];if(!!x.ex!==!!y.ex)return x.ex?1:-1;if(!x.sc!==!y.sc)return x.sc?-1:1;return (x.sc||'').localeCompare(y.sc||'')||byD(a,b)};
- const mk=(arr,so=byD)=>arr.slice().sort(so).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.sc?' · entro '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}</div></div>`).join('');
+ const mk=(arr,so=byD)=>arr.slice().sort(so).map(([x,i])=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.sc?' · entro '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='abb'&&+x.nv?abi(x):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='abb'?`<button class="x" onclick="uso(${i})">Utilizzo</button>`:''}${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}${r.id==='abb'?usDtl(x,i):''}</div>${r.id==='abb'&&UO===i?usForm(i):''}</div>`).join('');
  const q=nz(Q[r.id]||'').split(' ').filter(Boolean),vm=(r.id==='lot'||r.id==='aut')?(VM[r.id]||'e'):'d',g=vm==='g';
  let pr=rows.map((x,i)=>[x,i]).filter(([x])=>SHEX[r.id]||!x.ex);
  if(q.length)pr=pr.filter(([x])=>{const t=nz(r.f.map(([k])=>x[k]).join(' '));return q.every(w=>t.includes(w))});
@@ -90,7 +90,7 @@ function listHtml(r){const rows=S.r[r.id]||[];
 function refList(){const r=R.find(x=>x.id===V.id),l=$('#lst');if(r&&l)l.innerHTML=listHtml(r)||'<p class="st">Ancora nessuna registrazione.</p>'}
 function listView(r){
  const rows=S.r[r.id]||[],p=pre,eq=ED>=0?rows[ED]:null,bs=(r.id==='lot'&&DL&&!(ED>=0?rows[ED]:null))?DL:{};pre={};
- const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w,!act0(w==='*'?'':w).length)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${(r.id==='lot'&&(k==='p'||k==='fo'))||(r.id==='aut'&&k==='p')?'list="dl_'+k+'" autocomplete="off"':''}${(r.id==='lot'||r.id==='aut')&&k==='p'?' oninput="pv()"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>'+((r.id==='lot'||r.id==='aut')&&k==='p'?'<div id="prev"></div>':'')).join('');
+ const inp=r.f.map(([k,l,t,w])=>`<label>${l}`+(w?`<select onchange="${r.id==='prod'?'pickp':'pick'}('${k}',this)">${lopt(w==='*'?'':w,!act0(w==='*'?'':w).length)}</select>`:'')+(t==='c'?`<select id="f_${k}"><option ${eq&&eq[k]==='NC'?'':'selected'}>C<option ${eq&&eq[k]==='NC'?'selected':''}>NC</select>`:`<input id="f_${k}" type="${t==='d'?'date':'text'}" ${t==='n'?'inputmode="decimal"':''} ${(r.id==='lot'&&(k==='p'||k==='fo'))||(r.id==='aut'&&k==='p')?'list="dl_'+k+'" autocomplete="off"':''}${(r.id==='lot'||r.id==='aut')&&k==='p'?' oninput="pv()"':''} value="${E(eq?(eq[k]??''):(p[k]??bs[k]??(k==='d'?TD:k==='s'?S.f:'')))}">`)+'</label>'+((r.id==='lot'||r.id==='aut')&&k==='p'?'<div id="prev"></div>':'')).join('')+(r.id==='abb'?`<label>Quante vaschette hai abbattuto? (facoltativo)<input id="f_nv" inputmode="numeric" value="${E(eq?(eq.nv??''):'')}"></label>`:'');
  const bn=(r.id==='lot'&&DL&&!eq)?`<div class="dlb">Consegna aperta: <b>${E(DL.fo)}</b> · fattura/DDT <b>${E(DL.b)}</b> · ${fmt(DL.d)}<br>Compila solo prodotto, lotto e scadenza. Per un altro fornitore o un'altra fattura chiudi la consegna.<br><button class="x" onclick="DL=null;render()">Chiudi consegna</button></div>`:'';
  const dls=r.id==='aut'?`<datalist id="dl_p">${[...new Set([...BASE,...rows.map(x=>x.p).filter(Boolean)])].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`:r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set((k==='p'?[...rows,...(S.r.aut||[])]:rows).map(x=>x[k]).concat(k==='p'?BASE:[]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
  const list=listHtml(r);
@@ -108,7 +108,7 @@ function pick(k,el){const x=el.value?gl(el.value):null;if(!x)return;$('#f_'+k).v
 function pickp(k,el){const x=el.value?gl(el.value):null;if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),lt(x.p,x));el.value=''}
 function ex(id,i){const x=S.r[id][i];x.ex=x.ex?'':1;save();render()}
 function add(id){
- const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());
+ const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());if(id==='abb')o.nv=$('#f_nv').value.trim();
  const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&(!r.querySelector('select').value||(r.querySelector('select').value==='x'&&!r.querySelector('.mn').value.trim()))).map(r=>r.querySelector('input').value.trim());
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
@@ -152,7 +152,7 @@ function sheet(r){
   else h=`<table style="--rh:4.1mm"><tr><th rowspan="2">GG<th rowspan="2">Controllo pre-operativo C/NC<th colspan="12">GIORNALIERA<th rowspan="2">FIRMA</tr><tr>${AR.map(a=>`<th style="font-size:7.5px">${a}`).join('')}</tr>${days.map(d=>{const q=M[d]||{};return`<tr><td>${d}<td>${E(q.pre)}${AR.map((a,i)=>`<td>${q['a'+i]?'✓':''}`).join('')}<td>${E(q.s)}</tr>`}).join('')}</table>`;
   h=`<div class="pg">${hd(r.id==='temp'?x:x)}${h}${gd}${r.nofoot?'':ft}</div>`}
  else{
-  const rows=[...(S.r[r.id]||[])].sort((a,b)=>(a.d||'').localeCompare(b.d||'')),np=Math.max(1,Math.ceil(rows.length/r.n)),rh=r.o==='l'?Math.floor(135/r.n):Math.floor(205/r.n);
+  const rows=[...xr(r)].sort((a,b)=>(a.d||'').localeCompare(b.d||'')),np=Math.max(1,Math.ceil(rows.length/r.n)),rh=r.o==='l'?Math.floor(135/r.n):Math.floor(205/r.n);
   for(let p=0;p<np;p++){const c=rows.slice(p*r.n,(p+1)*r.n);while(c.length<r.n)c.push({});
    h+=`<div class="pg">${hd()}<table style="--rh:${rh}mm"><tr>${r.f.map(f=>`<th>${E(f[1])}`).join('')}</tr>${c.map(x=>`<tr>${r.f.map(([k,,t])=>`<td>${E(t==='d'?fmt(x[k]):x[k])}`).join('')}</tr>`).join('')}</table>${gd}${r.nofoot?'':ft}</div>`}}
  return{o,h}}
@@ -192,6 +192,18 @@ function edRows(x){const d=$('#rcl');if(!d)return;
  rows.forEach(r=>{if(/^_+$/.test(r.m))r.m=''});if(!rows.length)return;
  d.innerHTML=rows.map(r=>ing(r.n)).join('');
  [...d.querySelectorAll('.ing')].forEach((el,i)=>{const r=rows[i];if(!r.m)return;el.querySelector('select').value='x';const mn=el.querySelector('.mn');mn.hidden=false;mn.value=r.m})}
+let UO=-1;
+const usT=x=>(x.us||[]).reduce((t,u)=>t+(+u.n||1),0);
+const abi=x=>' · vaschette '+(+x.nv)+' (usate '+usT(x)+', rimaste '+Math.max(0,(+x.nv)-usT(x))+')';
+const usDtl=(x,i)=>(x.us||[]).map((u,j)=>`<div><b>Utilizzo:</b> ${fmt(u.d)} – ${u.n} vaschett${+u.n===1?'a':'e'} <button class="x" onclick="usDel(${i},${j})">Togli</button></div>`).join('');
+const usForm=i=>`<div class="dlb">Quando hai usato le vaschette?<label>Data di somministrazione<input id="u_d" type="date" value="${TD}"></label><label>Quante vaschette<input id="u_n" inputmode="numeric" value="1"></label><button class="x" onclick="usSave(${i})">Salva utilizzo</button><button class="x" onclick="UO=-1;refList()">Annulla</button></div>`;
+function uso(i){UO=UO===i?-1:i;refList()}
+function usSave(i){const x=S.r.abb[i],d=$('#u_d').value,n=Math.max(1,parseInt($('#u_n').value)||1);if(!d)return msg('Scegli la data');(x.us=x.us||[]).push({d,n});UO=-1;save();msg('Utilizzo registrato');render()}
+function usDel(i,j){if(!confirm('Togliere questo utilizzo?'))return;S.r.abb[i].us.splice(j,1);save();render()}
+function xr(r){const a=S.r[r.id]||[];if(r.id!=='abb')return a;const o=[];
+ a.forEach(x=>{const us=x.us||[];if(!us.length){o.push(x);return}const nv=+x.nv||0,pre=x.q?x.q+' ':'';
+  us.forEach(u=>o.push(Object.assign({},x,{q:pre+'(usate '+(u.n||1)+(nv?' di '+nv:'')+')',ds:u.d})));
+  if(nv&&usT(x)<nv)o.push(Object.assign({},x,{q:pre+'(rimaste '+(nv-usT(x))+' di '+nv+')',ds:''}))});return o}
 let SEL={},SM=null;
 function sendView(){SM=SM||V.m;const regs=R.filter(x=>x.k==='g'||x.k==='l');
  const pl=(n,u,m)=>n+' '+(n===1?u:m),cnt=x=>x.k==='g'?pl(Object.keys(((S.g[x.id]||{})[SM])||{}).length,'giorno','giorni'):pl((S.r[x.id]||[]).length,'registrazione','registrazioni');
@@ -270,7 +282,7 @@ async function mkpdf(r,name){
    for(let d=1;d<=31;d++){const q=M0[pad(d)]||{};box(M,y,gw,rh,pad(d),{b:1,sz:7});box(M+gw,y,pw,rh,q.pre||'',{sz:7.5});AR.forEach((a,i)=>{box(M+gw+pw+i*aw,y,aw,rh,'');if(q['a'+i])tick(M+gw+pw+i*aw,y,aw,rh)});box(M+gw+pw+12*aw,y,sw,rh,q.s||'',{sz:7.5});y+=rh}
    y+=8}
   guide(y);foot()}
- else{const rows=(S.r[r.id]||[]).slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')),n=r.n,np=Math.max(1,Math.ceil(rows.length/n)),LG=/^(p|i|e|a|z|o|m)$/,
+ else{const rows=xr(r).slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')),n=r.n,np=Math.max(1,Math.ceil(rows.length/n)),LG=/^(p|i|e|a|z|o|m)$/,
    wt=r.f.map(([k,l,t])=>t==='d'?1:k==='s'?1.1:LG.test(k)?2.2:1.4),sm=wt.reduce((a,b)=>a+b,0),cw=wt.map(v=>v/sm*CW);
   for(let p=0;p<np;p++){add();let y=head(r.t);const hh=36,rh=avail(y,hh)/n;let x=M;
    r.f.forEach(([k,l],i)=>{box(x,y,cw[i],hh,l,{b:1,sz:7.5,fill:HB});x+=cw[i]});y+=hh;
