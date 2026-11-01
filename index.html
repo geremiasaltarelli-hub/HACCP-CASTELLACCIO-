@@ -94,7 +94,7 @@ function listView(r){
  const bn=(r.id==='lot'&&DL&&!eq)?`<div class="dlb">Consegna aperta: <b>${E(DL.fo)}</b> · fattura/DDT <b>${E(DL.b)}</b> · ${fmt(DL.d)}<br>Compila solo prodotto, lotto e scadenza. Per un altro fornitore o un'altra fattura chiudi la consegna.<br><button class="x" onclick="DL=null;render()">Chiudi consegna</button></div>`:'';
  const dls=r.id==='aut'?`<datalist id="dl_p">${[...new Set([...BASE,...rows.map(x=>x.p).filter(Boolean)])].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`:r.id==='lot'?['p','fo'].map(k=>`<datalist id="dl_${k}">${[...new Set((k==='p'?[...rows,...(S.r.aut||[])]:rows).map(x=>x[k]).concat(k==='p'?BASE:[]).filter(Boolean))].map(v=>`<option value="${E(v)}">`).join('')}</datalist>`).join(''):'';
  const list=listHtml(r);
- $('#app').innerHTML=`<div><button class="b o" onclick="document.getElementById('reg').scrollIntoView()">Vedi registrazioni (${rows.length})</button><button class="b o" onclick="vw('${r.id}')">Visualizza scheda</button></div>${r.id==='prod'?rc1():''}${bn}${inp}${dls}<button class="b" onclick="add('${r.id}')">${eq?'Salva modifiche':'Aggiungi'}</button>${eq?'<button class="b o" onclick="ED=-1;render()">Annulla</button>':''}${r.id==='prod'?rc2():''}<h2 id="reg">Registrazioni (${rows.length})</h2><input id="qs" type="search" placeholder="Cerca per prodotto, fornitore o lotto" value="${E(Q[r.id]||'')}" oninput="Q['${r.id}']=this.value;LIM['${r.id}']=40;refList()"><div id="lst">${list||'<p class="st">Ancora nessuna registrazione.</p>'}</div>${pbtn(r)}`;if(r.id==='prod'&&eq)edRows(eq)}
+ $('#app').innerHTML=`<div><button class="b o" onclick="document.getElementById('reg').scrollIntoView()">Vedi registrazioni (${rows.length})</button><button class="b o" onclick="vw('${r.id}')">Visualizza scheda</button></div>${r.id==='prod'?rc1():''}${bn}${inp}${dls}<button class="b" onclick="add('${r.id}')">${eq?'Salva modifiche':'Aggiungi'}</button>${eq?'<button class="b o" onclick="ED=-1;render()">Annulla</button>':''}${r.id==='prod'?rc2():''}<h2 id="reg">Registrazioni (${rows.length})</h2><input id="qs" type="search" placeholder="Cerca per prodotto, fornitore o lotto" value="${E(Q[r.id]||'')}" oninput="Q['${r.id}']=this.value;LIM['${r.id}']=40;refList()"><div id="lst">${list||'<p class="st">Ancora nessuna registrazione.</p>'}</div>${pbtn(r)}`;if(r.id==='prod'){if(eq)edRows(eq);lotPh()}}
 const BASE=['Mele','Mirtilli','Prugne','Noci','Uova','Carne di maiale','Agnello'];
 const au=x=>({p:x.p,fo:'Produzione aziendale',b:x.a||'',l:x.l,sc:x.sc});
 const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
@@ -112,7 +112,7 @@ function add(id){
  const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&(!r.querySelector('select').value||(r.querySelector('select').value==='x'&&!r.querySelector('.mn').value.trim()))).map(r=>r.querySelector('input').value.trim());
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
- if(id==='aut'&&!o.l)o.l=((o.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+(o.d||TD).replace(/-/g,'');if(o.s)S.f=o.s;
+ if(id==='prod'&&!o.l)o.l=lotP(o.p,o.d);if(id==='aut'&&!o.l)o.l=((o.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+(o.d||TD).replace(/-/g,'');if(o.s)S.f=o.s;
  if(ED>=0&&S.r[id]&&S.r[id][ED]){S.r[id][ED]=Object.assign({},S.r[id][ED],o,{mod:new Date().toISOString()});ED=-1;save();msg('Modifica salvata');render();return}
  (S.r[id]=S.r[id]||[]).push(o);if(id==='lot')DL={d:o.d,fo:o.fo,b:o.b,s:o.s};save();
  if(id==='lot'&&o.c==='NC'){pre={d:o.d,p:o.p,fo:o.fo,a:'Prodotto non conforme al ricevimento'};msg('Registrata: compila la non conformità');go('nc');return}
@@ -192,6 +192,9 @@ function edRows(x){const d=$('#rcl');if(!d)return;
  rows.forEach(r=>{if(/^_+$/.test(r.m))r.m=''});if(!rows.length)return;
  d.innerHTML=rows.map(r=>ing(r.n)).join('');
  [...d.querySelectorAll('.ing')].forEach((el,i)=>{const r=rows[i];if(!r.m)return;el.querySelector('select').value='x';const mn=el.querySelector('.mn');mn.hidden=false;mn.value=r.m})}
+const LSW=new Set(['di','del','dello','della','dei','degli','delle','da','dal','dalla','dai','dalle','al','allo','alla','ai','alle','con','in','e','ed','a','il','lo','la','i','gli','le','un','una','per','su','nel','nella','sul','sulla']);
+function lotP(p,d){const ini=String(p||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(w=>w&&!LSW.has(w)).map(w=>w[0].toUpperCase()).join(''),t=(d||TD).split('-');return 'L'+(ini||'X')+t[2]+t[1]+t[0]}
+function lotPh(){const l=$('#f_l'),p=$('#f_p'),d=$('#f_d');if(!l||!p||!d)return;const u=()=>{l.placeholder='Se lo lasci vuoto: '+lotP(p.value,d.value)};p.addEventListener('input',u);d.addEventListener('input',u);d.addEventListener('change',u);u()}
 let UO=-1;
 const usT=x=>(x.us||[]).reduce((t,u)=>t+(+u.n||1),0);
 const abi=x=>' · vaschette '+(+x.nv)+' (usate '+usT(x)+', rimaste '+Math.max(0,(+x.nv)-usT(x))+')';
