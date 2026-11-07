@@ -203,6 +203,26 @@ const abD=n=>n<0?'<b style="color:#c00">SCADUTO da '+(-n)+(n===-1?' giorno':' gi
 function abx(x){const g=parseInt(x.gg);if(x.ex)return' · finito';if(!g||!x.d)return'';const s=abSt(x),sc=dAdd(x.d,g);return' · '+(x.cv||'conservazione')+' fino al '+fmt(sc)+(s&&s.w?' · '+abD(s.n):'')}
 function abAl(){const a=[];(S.r.abb||[]).forEach(x=>{const s=abSt(x);if(s&&s.w)a.push({x,s})});if(!a.length)return'';return'<div class="dlb" style="border-color:#c00"><b>⚠ Sughi abbattuti da controllare</b>'+a.sort((u,v)=>u.s.n-v.s.n).map(({x,s})=>`<div>${E(x.p)}${x.cv?' – '+E(x.cv):''} – ${abD(s.n)} (${fmt(s.sc)})${+x.nv?' – rimaste '+(+x.nv-usT(x))+' vaschette':''}</div>`).join('')+'<button class="x" onclick="go(\'abb\');openReg(\'abb\')">Apri il registro abbattimento</button></div>'}
 function abPre(){const p=nz($('#f_p').value),g=$('#f_gg'),c=$('#f_cv');if(!p||!g||g.value)return;const m=[...(S.r.abb||[])].reverse().find(x=>x.gg&&nz(x.p)===p);if(m){g.value=m.gg;if(!c.value)c.value=m.cv||''}}
+const AL=['glutine','crostacei','uova','pesce','arachidi','soia','latte','frutta a guscio','sedano','senape','sesamo','solfiti','lupini','molluschi'];
+const AK=[
+[['farina','farine','grano','semola','semolino','pasta','paste','pastella','pane','pani','pangrattato','pangrattati','segale','orzo','avena','farro','kamut','couscous','cous','bulgur','seitan','spaghetti','tagliatelle','tagliolini','pappardelle','fettuccine','penne','rigatoni','fusilli','maccheroni','orecchiette','lasagna','lasagne','ravioli','tortellini','cannelloni','gnocchi','besciamella','biscotti','biscotto','cracker','grissini','pizza','birra','malto','impanatura','impanato','sfoglia','frolla','brisee'],['biscott']],
+[[],['gamber','scamp','aragost','astic','granch','mazzancoll','canocchi','crostace','krill']],
+[['uovo','uova','tuorlo','tuorli','albume','albumi','maionese','zabaione','meringa','meringhe','frittata'],[]],
+[['pesce','pesci','tonno','tonni','salmone','merluzzo','baccala','stoccafisso','nasello','sogliola','surimi','colatura','halibut','dentice','cernia','rombo','palamita','aringa','aringhe','luccio','sgombro','orata','branzino','spigola','trota'],['acciug','alici','sardin']],
+[['noccioline','nocciolina'],['arachid']],
+[['soia','soya','tofu','edamame','tamari','miso','tempeh'],[]],
+[['latte','panna','burro','formaggio','formaggi','ricotta','mozzarella','mozzarelle','parmigiano','grana','pecorino','mascarpone','yogurt','provola','scamorza','caciocavallo','gorgonzola','fontina','stracchino','taleggio','crescenza','lattosio','caciotta','emmental','burrata','kefir','siero','caseina','gelato','latticini','latticino','fiordilatte','robiola','asiago','provolone','cacioricotta','caprino','feta','groviera','gruviera','pannacotta','besciamella'],[]],
+[['noce','noci','nocciola','nocciole','gianduia','marzapane','pralina','praline','nutella','granella'],['mandorl','pistacch','anacard','macadamia','pecan','nocciol']],
+[['sedano','sedani','soffritto','dado','brodo','minestrone','mirepoix','odori'],[]],
+[['senape','mostarda'],[]],
+[['sesamo','tahina','tahini','gomasio'],[]],
+[['vino','vini','aceto','uvetta','sultanina','marsala','prosecco','spumante','solforosa'],['solfit']],
+[[],['lupin']],
+[['polpi','seppie'],['cozz','vongol','calamar','seppi','polpo','ostric','totan','capesant','telline','cannolicchi','molluschi','mollusc','moscardin','mitili','lumac']]];
+function alOf(t){let n=' '+nz(t)+' ';
+ n=n.replace(/ noce moscata | noci moscate /g,' ').replace(/ noce di (vitello|vitella|manzo|maiale|prosciutto|spalla) /g,' ').replace(/ farina di (mais|riso|ceci|castagne|castagna|patate|saraceno|grano saraceno|tapioca|lenticchie|quinoa|miglio|amaranto|cocco) /g,' ').replace(/ latte di (cocco|riso) /g,' ');
+ const f=new Set();n.trim().split(' ').forEach(w=>{if(!w)return;AK.forEach(([ex,pf],i)=>{if(ex.includes(w)||pf.some(p=>w.startsWith(p)&&!(i===7&&p==='nocciol'&&/^noccioline|^nocciolina/.test(w))))f.add(i)})});return[...f].sort((a,b)=>a-b)}
+function alAn(txt){const parts=String(txt||'').split(/\s*,\s*/).filter(Boolean),all=new Set(),out=parts.map(p=>{const a=alOf(p);a.forEach(i=>all.add(i));return a.length?p+'*':p});if(!out.length)return String(txt||'');return out.join(', ')+(all.size?' — * Allergeni: '+[...all].sort((a,b)=>a-b).map(i=>AL[i]).join(', '):'')}
 let LO={};
 function tgl(id){LO[id]=!LO[id];const w=$('#lw');if(w)w.hidden=!LO[id];const b=$('#reg');if(b)b.textContent=(LO[id]?'▼ Nascondi':'▶ Mostra')+' registrazioni ('+(S.r[id]||[]).length+')'}
 function openReg(id){if(!LO[id])tgl(id);$('#reg').scrollIntoView()}
@@ -214,7 +234,7 @@ const usForm=i=>`<div class="dlb">Quando hai usato le vaschette?<label>Data di s
 function uso(i){UO=UO===i?-1:i;refList()}
 function usSave(i){const x=S.r.abb[i],d=$('#u_d').value,n=Math.max(1,parseInt($('#u_n').value)||1);if(!d)return msg('Scegli la data');(x.us=x.us||[]).push({d,n});UO=-1;save();msg('Utilizzo registrato');render()}
 function usDel(i,j){if(!confirm('Togliere questo utilizzo?'))return;S.r.abb[i].us.splice(j,1);save();render()}
-function xr(r){const a=S.r[r.id]||[];if(r.id!=='abb')return a;const o=[];
+function xr(r){const a=S.r[r.id]||[];if(r.id==='prod')return a.map(x=>Object.assign({},x,{i:alAn(x.i)}));if(r.id!=='abb')return a;const o=[];
  a.forEach(x=>{const us=x.us||[];if(!us.length){o.push(x);return}const nv=+x.nv||0,pre=x.q?x.q+' ':'';
   us.forEach(u=>o.push(Object.assign({},x,{q:pre+'(usate '+(u.n||1)+(nv?' di '+nv:'')+')',ds:u.d})));
   if(nv&&usT(x)<nv)o.push(Object.assign({},x,{q:pre+'(rimaste '+(nv-usT(x))+' di '+nv+')',ds:''}))});return o}
