@@ -100,7 +100,8 @@ const BASE=['Mele','Mirtilli','Prugne','Noci','Uova','Carne di maiale','Agnello'
 const au=x=>({p:x.p,fo:'Produzione aziendale',b:afs(x),l:x.l,sc:x.sc});
 const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
 const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
-const mt=(p,w,pt)=>{const a=nz(p).split(' '),b=nz(w).split(' ').filter(Boolean),n=b.length;if(!n)return false;const e=(x,y,l)=>pt&&l?x.startsWith(y):x===y;if(!e(a[0],b[0],n===1))return false;let j=1;for(let i=1;i<a.length&&j<n;i++)if(e(a[i],b[j],j===n-1))j++;return j===n};
+const stm=x=>x.length>3?x.replace(/[aeio]$/,''):x;
+const mt=(p,w,pt)=>{const a=nz(p).split(' ').map(stm),b=nz(w).split(' ').filter(Boolean).map(stm),n=b.length;if(!n)return false;const e=(x,y,l)=>pt&&l?x.startsWith(y):x===y;if(!e(a[0],b[0],n===1))return false;let j=1;for(let i=1;i<a.length&&j<n;i++)if(e(a[i],b[j],j===n-1))j++;return j===n};
 const act0=(w,pt)=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>mt(x.p,w,pt)):a};
 const lopt=(w,all,pt)=>{const a=(all||!w)?act0(''):act0(w,pt);return`<option value="">${a.length?'Scegli il lotto':(all||!w?'Nessun lotto attivo (compila il DOC 05)':'Nessun lotto per questo ingrediente')}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
 const BL='______________';
