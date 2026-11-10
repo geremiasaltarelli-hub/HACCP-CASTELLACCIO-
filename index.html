@@ -257,23 +257,24 @@ async function nbPrint(){
  let dev;try{dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[NB.sv]})}catch(e){return msg(e.name==='NotFoundError'?'Nessuna stampante scelta':'Bluetooth: '+e.message)}
  const lg=[],st=t=>{const e=$('#nbst');if(e)e.textContent=t+(lg.length?'\n\n'+lg.join('\n'):'')},sl=t=>new Promise(r=>setTimeout(r,t)),hx=a=>[...a].map(v=>v.toString(16).padStart(2,'0')).join(' '),md=nbMd();
  try{st('Mi collego alla stampante…');
-  const sv=await(await dev.gatt.connect()).getPrimaryService(NB.sv),ch=await sv.getCharacteristic(NB.ch);let wait=null;
-  await ch.startNotifications();ch.addEventListener('characteristicvaluechanged',ev=>{const v=ev.target.value,a=new Uint8Array(v.buffer.slice(v.byteOffset,v.byteOffset+v.byteLength));if(wait)wait(a)});
+  const sv=await(await dev.gatt.connect()).getPrimaryService(NB.sv),ch=await sv.getCharacteristic(NB.ch);let wait=null,rows=0;
+  await ch.startNotifications();ch.addEventListener('characteristicvaluechanged',ev=>{const v=ev.target.value,a=new Uint8Array(v.buffer.slice(v.byteOffset,v.byteOffset+v.byteLength));if(a[2]===0xD3){rows=a[4]*256+a[5]+1;return}if(wait)wait(a)});
   const wr=ch.writeValueWithoutResponse?ch.writeValueWithoutResponse.bind(ch):ch.writeValue.bind(ch);
   const send=async b=>{for(let o=0;o<b.length;o+=20)await wr(b.slice(o,o+20))};
-  const cmd=async(c,d,nome)=>{const p=new Promise(r=>{wait=r;setTimeout(()=>r(null),2500)});await send(nbPk(c,d));const r=await p;wait=null;lg.push('0x'+c.toString(16)+' '+nome+' → '+(r?hx(r.slice(2,Math.min(r.length-3,12))):'nessuna risposta'));return r};
+  const cmd=async(c,d,nome,q)=>{const p=new Promise(r=>{wait=r;setTimeout(()=>r(null),2500)});await send(nbPk(c,d));const r=await p;wait=null;if(!q)lg.push('0x'+c.toString(16)+' '+nome+' → '+(r?hx(r.slice(2,Math.min(r.length-3,16))):'nessuna risposta'));return r};
   const need=async(c1,d,nome)=>{const r=await cmd(c1,d,nome);if(!r)throw new Error('La stampante non risponde ('+nome+')');return r};
   const c=nbCanvas(),W=c.width,H=c.height,px=c.getContext('2d').getImageData(0,0,W,H).data,n=Math.max(1,Math.min(99,+LB.n||1));
-  for(let k=1;k<=n;k++){st('Stampo '+k+' di '+n+' (modo '+(md==='b1'?'B1':'semplice')+')…');
+  await cmd(0xDC,[1],'coperchio e rotolo');
+  let fine=false;for(let k=1;k<=n;k++){st('Stampo '+k+' di '+n+' (modo '+(md==='b1'?'B1':'semplice')+')…');
    await need(0x21,[3],'densità');await need(0x23,[1],'tipo etichetta');
    if(md==='b1'){await need(0x01,[0,0,1,0,0,0,0],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255,0,1],'misura')}
    else{await need(0x01,[1],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255],'misura')}
    for(let y=0;y<H;y++){const row=[],seg=[0,0,0];for(let xb=0;xb<W;xb+=8){let v=0;for(let i=0;i<8;i++){const o=((y*W)+xb+i)*4,bk=(px[o]*.3+px[o+1]*.59+px[o+2]*.11)<128?1:0;v=(v<<1)|bk;if(bk)seg[Math.min(2,Math.floor((xb+i)/(W/3)))]++}row.push(v)}
     if(md==='b1'&&!seg[0]&&!seg[1]&&!seg[2])await send(nbPk(0x84,[y>>8,y&255,1]));else await send(nbPk(0x85,[y>>8,y&255,...(md==='b1'?seg:[0,0,0]),1,...row]))}
    await need(0xE3,[1],'fine pagina');
-   if(md==='b1'){for(let t=0;t<30;t++){const r=await cmd(0xA3,[1],'stato');if(r&&r.length>9&&(r[4]*256+r[5])>=1&&r[6]>=100)break;await sl(200)}}
+   fine=false;for(let t=0;t<60;t++){const r=await cmd(0xA3,[1],'stato',1);if(r&&r.length>9){const pg=r[4]*256+r[5],a1=r[6],a2=r[7];if(t%10===0||pg>=1)lg.push('stato: pagine '+pg+', stampa '+a1+'%, avanzamento '+a2+'% (righe ricevute: '+rows+')');if(pg>=1||a1>=100){fine=true;break}}await sl(250)}
    for(let t=0;t<40;t++){const r=await cmd(0xF3,[1],'fine stampa');if(r&&r[4]===1)break;await sl(150)}}
-  st('Inviato alla stampante: se non esce nulla, guarda il registro qui sotto.');try{dev.gatt.disconnect()}catch(e){}
+  st(fine?'La stampante ha segnalato la stampa completata.':'Etichetta ricevuta ('+rows+' righe), ma la stampante NON ha avviato la stampa: pagine stampate 0. Controlla rotolo e coperchio, oppure prova l’altro modo.');try{dev.gatt.disconnect()}catch(e){}
  }catch(e){st('Non è andata: '+(e&&e.message?e.message:e));try{dev.gatt.disconnect()}catch(x){}}}
 let LO={};
 function tgl(id){LO[id]=!LO[id];const w=$('#lw');if(w)w.hidden=!LO[id];const b=$('#reg');if(b)b.textContent=(LO[id]?'▼ Nascondi':'▶ Mostra')+' registrazioni ('+cnt(id)+')'}
