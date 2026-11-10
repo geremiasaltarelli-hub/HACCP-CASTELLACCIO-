@@ -77,7 +77,7 @@ function listHtml(r){const rows=S.r[r.id]||[];
  const auItem=x=>`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x.p)} · Produzione aziendale · lotto ${E(x.l)}${x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):''}${x.ex?' · ESAURITO':''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="go('aut')">Apri in Aziendale</button><button class="x" onclick="ex('aut',${x._au})">${x.ex?'Riattiva':'Esaurito'}</button></span><div class="dtl" hidden><div><b>Registrato in:</b> Prodotti aziendali (autoproduzione)</div>${x.b?`<div><b>Autofattura:</b> ${E(x.b)}</div>`:''}</div></div>`;
  const byD=(a,b)=>(b[0].d||'').localeCompare(a[0].d||'');
  const byE=(a,b)=>{const x=a[0],y=b[0];if(!!x.ex!==!!y.ex)return x.ex?1:-1;if(!x.sc!==!y.sc)return x.sc?-1:1;return (x.sc||'').localeCompare(y.sc||'')||byD(a,b)};
- const mk=(arr,so=byD)=>arr.slice().sort(so).map(([x,i])=>x._au!==undefined?auItem(x):`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.sc?' · entro '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='abb'&&+x.nv?abi(x):''}${r.id==='abb'?abx(x):''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='abb'?`<button class="x" onclick="uso(${i})">Utilizzo</button><button class="x" onclick="ex('abb',${i})">${x.ex?'Riattiva':'Finito'}</button>`:''}${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button><button class="x" onclick="mvAut(${i})">Sposta in Aziendale</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}${r.id==='abb'?usDtl(x,i):''}${r.id==='aut'&&x.ad?`<div><b>Data autofattura:</b> ${fmt(x.ad)}</div>`:''}</div>${r.id==='abb'&&UO===i?usForm(i):''}</div>`).join('');
+ const mk=(arr,so=byD)=>arr.slice().sort(so).map(([x,i])=>x._au!==undefined?auItem(x):`<div class="it"><span><b>${fmt(x.d)}</b> ${E(x[r.f[1][0]])}${r.f[2]?' · '+E(x[r.f[2][0]]):''}${r.id==='lot'?' · lotto '+E(x.l)+(x.sc?' · scad. '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='aut'?' · lotto '+E(x.l)+(x.sc?' · entro '+fmt(x.sc)+(x.ex?'':sdl(x.sc)):'')+(x.ex?' · ESAURITO':''):''}${r.id==='abb'&&+x.nv?abi(x):''}${r.id==='abb'?abx(x):''}${r.id==='aut'&&x.from?' · copiata dai lotti in ingresso':''}${x.mod?' · modificata il '+fmt(x.mod.slice(0,10)):''}</span><span><button class="x" onclick="dt(this)">Dettagli</button><button class="x" onclick="ed(${i})">Modifica</button>${r.id==='abb'?`<button class="x" onclick="uso(${i})">Utilizzo</button><button class="x" onclick="ex('abb',${i})">${x.ex?'Riattiva':'Finito'}</button>`:''}${r.id==='prod'?`<button class="x" onclick="lab(${i})">Etichetta</button>`:''}${r.id==='lot'?`<button class="x" onclick="sameDel(${i})">Stessa consegna</button><button class="x" onclick="cpAut(${i})">Copia in Aziendale</button>`:''}${r.id==='lot'||r.id==='aut'?`<button class="x" onclick="ex('${r.id}',${i})">${x.ex?'Riattiva':'Esaurito'}</button>`:''}<button class="x" onclick="del('${r.id}',${i},this)">Elimina</button></span><div class="dtl" hidden>${r.f.map(([k,l,t])=>x[k]?`<div><b>${E(l)}:</b> ${E(t==='d'?fmt(x[k]):x[k])}</div>`:'').join('')}${r.id==='abb'?usDtl(x,i):''}${r.id==='aut'&&x.ad?`<div><b>Data autofattura:</b> ${fmt(x.ad)}</div>`:''}</div>${r.id==='abb'&&UO===i?usForm(i):''}</div>`).join('');
  const q=nz(Q[r.id]||'').split(' ').filter(Boolean),vm=(r.id==='lot'||r.id==='aut')?(VM[r.id]||'e'):'d',g=vm==='g';
  let pr=rows.map((x,i)=>[x,i]);if(r.id==='lot')pr=pr.concat(auRows().map(x=>[x,x._au]));pr=pr.filter(([x])=>SHEX[r.id]||!x.ex);
  if(q.length)pr=pr.filter(([x])=>{const t=nz(r.f.map(([k])=>x[k]).join(' '));return q.every(w=>t.includes(w))});
@@ -102,7 +102,7 @@ const gl=v=>String(v)[0]==='a'?au(S.r.aut[+String(v).slice(1)]):S.r.lot[+v];
 const nz=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const stm=x=>x.length>3?x.replace(/[aeio]$/,''):x;
 const mt=(p,w,pt)=>{const a=nz(p).split(' ').map(stm),b=nz(w).split(' ').filter(Boolean).map(stm),n=b.length;if(!n)return false;const e=(x,y,l)=>pt&&l?x.startsWith(y):x===y;if(!e(a[0],b[0],n===1))return false;let j=1;for(let i=1;i<a.length&&j<n;i++)if(e(a[i],b[j],j===n-1))j++;return j===n};
-const act0=(w,pt)=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>mt(x.p,w,pt)):a};
+const act0=(w,pt)=>{const a=[];(S.r.lot||[]).forEach((x,i)=>{if(!x.ex&&x.c!=='NC'&&(!x.sc||x.sc>=TD))a.push([x,String(i)])});(S.r.aut||[]).forEach((x,i)=>{if(!hasSrc(x)&&!x.ex&&(!x.sc||x.sc>=TD))a.push([au(x),'a'+i])});return w?a.filter(([x])=>mt(x.p,w,pt)):a};
 const lopt=(w,all,pt)=>{const a=(all||!w)?act0(''):act0(w,pt);return`<option value="">${a.length?'Scegli il lotto':(all||!w?'Nessun lotto attivo (compila il DOC 05)':'Nessun lotto per questo ingrediente')}</option>`+a.map(([x,i])=>`<option value="${i}">${E(x.p)} – ${E(x.fo)} – lotto ${E(x.l)}${x.sc?' – scad. '+fmt(x.sc):''}</option>`).join('')};
 const BL='______________';
 const lt=(m,x)=>x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l||BL}`:x.la?`${m}: ${x.fo}, doc. ${x.b} (senza lotto del fornitore)`:`${m}: ${x.fo}, doc. ${x.b||BL}, lotto ${x.l||BL}`;
@@ -227,43 +227,14 @@ function alOf(t){let n=' '+nz(t)+' ';
 function alAn(txt){const parts=String(txt||'').split(/\s*,\s*/).filter(Boolean),all=new Set(),out=parts.map(p=>{const a=alOf(p);a.forEach(i=>all.add(i));return a.length?p+'*':p});if(!out.length)return String(txt||'');return out.join(', ')+(all.size?' — * Allergeni: '+[...all].sort((a,b)=>a-b).map(i=>AL[i]).join(', '):'')}
 function docLot(b,d){if(!b)return'';const t=String(d||TD).split('-');return b+' del '+t[2]+'/'+t[1]+'/'+t[0].slice(2)}
 const afs=x=>x.a?(x.ad?x.a+' del '+fmt(x.ad):x.a):(x.ad?'del '+fmt(x.ad):'');
-const auRows=()=>(S.r.aut||[]).map((x,i)=>({d:x.d,p:x.p,fo:'Produzione aziendale',b:afs(x),l:x.l,sc:x.sc,t:'',c:'',s:x.s,ex:x.ex,_au:i}));
-const cnt=id=>(S.r[id]||[]).length+(id==='lot'?(S.r.aut||[]).length:0);
-function mvAut(i){const x=(S.r.lot||[])[i];if(!x)return;
- if(!confirm('Spostare "'+x.p+'" nel registro Aziendale? Sparisce da qui e compare tra i prodotti aziendali (restano vuoti quantità e origine, che puoi aggiungere con Modifica).'))return;
- const d=x.d||TD,l=(x.la?'':x.l)||((String(x.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+d.replace(/-/g,'')),o={d,p:x.p||'',q:'',l,o:'',m:'',a:x.b||'',sc:x.sc||'',s:x.s||''};
- if(x.ex)o.ex=x.ex;(S.r.aut=S.r.aut||[]).push(o);S.r.lot.splice(i,1);save();msg('Spostato nel registro Aziendale');render()}
-const NB={sv:'e7810a71-73ae-499d-8c15-faa9aef0c3f2',ch:'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'};
-function nbSz(){try{const t=JSON.parse(localStorage.getItem('nbs')||'{}');return{w:+t.w||50,h:+t.h||30}}catch(e){return{w:50,h:30}}}
-function nbSet(k,v){const t=nbSz();t[k]=Math.max(10,Math.min(60,+v||t[k]));try{localStorage.setItem('nbs',JSON.stringify(t))}catch(e){}}
-function nbCanvas(){const x=S.r.prod[LB.i],z=nbSz(),W=Math.min(384,Math.floor(z.w)*8),H=Math.round(z.h*8),c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#000';g.textBaseline='top';
- const pad=12,maxW=W-2*pad,F='Arial,Helvetica,sans-serif';let sz=Math.min(56,Math.floor(H/3)),lines;
- const wr=(t,s)=>{g.font='bold '+s+'px '+F;const o=[];let l='';for(const w of String(t).split(' ')){const tt=l?l+' '+w:w;if(g.measureText(tt).width<=maxW)l=tt;else{if(l)o.push(l);l=w}}o.push(l);return o};
- for(;;){lines=wr(x.p||'Prodotto',sz);if(lines.length<=2&&lines.every(l=>g.measureText(l).width<=maxW))break;if(sz<=16)break;sz-=2}
- let y=pad;g.font='bold '+sz+'px '+F;lines.slice(0,2).forEach(l=>{g.fillText(l,pad,y);y+=sz*1.1});
- const s2=Math.max(16,Math.min(34,Math.floor((H-y-pad)/2.4)));g.font=s2+'px '+F;y+=6;g.fillText('Lotto: '+(x.l||''),pad,y);y+=s2*1.25;g.fillText('Data: '+fmt(x.d),pad,y);return c}
-const nbPk=(cmd,d)=>{d=d||[];let cs=cmd^d.length;d.forEach(b=>cs^=b);return Uint8Array.from([0x55,0x55,cmd,d.length,...d,cs&255,0xAA,0xAA])};
-function nbUi(){const z=nbSz();return `<div style="margin:12px 0;padding:10px;border:1px solid var(--line);border-radius:8px"><b>Stampante Niimbot B1</b><div class="g2"><label>Larghezza rotolo (mm)<input type="number" value="${z.w}" onchange="nbSet('w',this.value);lbv()"></label><label>Altezza etichetta (mm)<input type="number" value="${z.h}" onchange="nbSet('h',this.value);lbv()"></label></div><button class="b" onclick="nbPrint()">Stampa sulla Niimbot (prova)</button><button class="b o" onclick="nbImg()">Salva come immagine</button><p class="st" id="nbst" style="text-align:left"></p><img alt="anteprima" style="border:1px solid #888;max-width:100%" src="${nbCanvas().toDataURL()}"></div>`}
-async function nbImg(){const c=nbCanvas(),x=S.r.prod[LB.i],nm='Etichetta-'+String(x.p||'prodotto').replace(/[^\w]+/g,'-')+'-'+String(x.l||'').replace(/[^\w]+/g,'-')+'.png';c.toBlob(async b=>{const f=new File([b],nm,{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:nm});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=nm;a.click()}}catch(e){if(e.name!=='AbortError')msg('Non sono riuscito a salvare l’immagine')}})}
-async function nbPrint(){
- if(!navigator.bluetooth)return msg('Il Bluetooth del browser non c’è: apri l’app con Chrome su Android');
- let dev;try{dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[NB.sv]})}catch(e){return msg(e.name==='NotFoundError'?'Nessuna stampante scelta':'Bluetooth: '+e.message)}
- const st=t=>{const e=$('#nbst');if(e)e.textContent=t},sl=t=>new Promise(r=>setTimeout(r,t));
- try{st('Mi collego alla stampante…');
-  const sv=await(await dev.gatt.connect()).getPrimaryService(NB.sv),ch=await sv.getCharacteristic(NB.ch);let wait=null;
-  await ch.startNotifications();ch.addEventListener('characteristicvaluechanged',ev=>{const a=new Uint8Array(ev.target.value.buffer.slice(ev.target.value.byteOffset,ev.target.value.byteOffset+ev.target.value.byteLength));if(wait)wait(a)});
-  const wr=ch.writeValueWithoutResponse?ch.writeValueWithoutResponse.bind(ch):ch.writeValue.bind(ch);
-  const send=async b=>{for(let o=0;o<b.length;o+=20)await wr(b.slice(o,o+20))};
-  const cmd=async(c,d)=>{const p=new Promise(r=>{wait=r;setTimeout(()=>r(null),2500)});await send(nbPk(c,d));const r=await p;wait=null;return r};
-  const c=nbCanvas(),W=c.width,H=c.height,px=c.getContext('2d').getImageData(0,0,W,H).data,n=Math.max(1,Math.min(99,+LB.n||1));
-  for(let k=1;k<=n;k++){st('Stampo '+k+' di '+n+'…');
-   const need=async(c1,d,nome)=>{if(!await cmd(c1,d))throw new Error('La stampante non risponde ('+nome+')')};
-   await need(0x21,[3],'densità');await need(0x23,[1],'tipo etichetta');await need(0x01,[1],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255],'misura');
-   for(let y=0;y<H;y++){const row=[y>>8,y&255,0,0,0,1];for(let xb=0;xb<W;xb+=8){let v=0;for(let i=0;i<8;i++){const o=((y*W)+xb+i)*4;v=(v<<1)|((px[o]*.3+px[o+1]*.59+px[o+2]*.11)<128?1:0)}row.push(v)}await send(nbPk(0x85,row))}
-   await need(0xE3,[1],'fine pagina');
-   for(let t=0;t<40;t++){const r=await cmd(0xF3,[1]);if(r&&r[4]===1)break;await sl(150)}}
-  st('Fatto: l’etichetta dovrebbe uscire.');try{dev.gatt.disconnect()}catch(e){}
- }catch(e){st('Non è andata: '+(e&&e.message?e.message:e)+' — prova “Salva come immagine”.');try{dev.gatt.disconnect()}catch(x){}}}
+const auRows=()=>(S.r.aut||[]).map((x,i)=>({d:x.d,p:x.p,fo:'Produzione aziendale',b:afs(x),l:x.l,sc:x.sc,t:'',c:'',s:x.s,ex:x.ex,_au:i,_h:hasSrc(x)})).filter(x=>!x._h);
+const cnt=id=>(S.r[id]||[]).length+(id==='lot'?auRows().length:0);
+const hasSrc=a=>a&&a.from&&(S.r.lot||[]).some(l=>l.id===a.from);
+function cpAut(i){const x=(S.r.lot||[])[i];if(!x)return;x.id=x.id||Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ if((S.r.aut||[]).some(a=>a.from===x.id))return msg('Questo prodotto è già nel registro Aziendale');
+ if(!confirm('Copiare "'+x.p+'" nel registro Aziendale? Resta anche qui, nei lotti in ingresso: viene aggiunta solo una copia tra i prodotti aziendali (quantità e origine restano vuote, le puoi aggiungere con Modifica).'))return;
+ const d=x.d||TD,l=(x.la?'':x.l)||((String(x.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+d.replace(/-/g,'')),o={d,p:x.p||'',q:'',l,o:'',m:'',a:x.b||'',sc:x.sc||'',s:x.s||'',from:x.id};
+ if(x.ex)o.ex=x.ex;(S.r.aut=S.r.aut||[]).push(o);save();msg('Copiato nel registro Aziendale');render()}
 let LO={};
 function tgl(id){LO[id]=!LO[id];const w=$('#lw');if(w)w.hidden=!LO[id];const b=$('#reg');if(b)b.textContent=(LO[id]?'▼ Nascondi':'▶ Mostra')+' registrazioni ('+cnt(id)+')'}
 function openReg(id){if(!LO[id])tgl(id);$('#reg').scrollIntoView()}
