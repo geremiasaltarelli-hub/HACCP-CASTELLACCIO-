@@ -264,10 +264,10 @@ async function nbPrint(){
   const cmd=async(c,d,nome,q,L)=>{const p=new Promise(r=>{wait=r;setTimeout(()=>r(null),2500)});await send(nbPk(c,d));const r=await p;wait=null;if(!q)lg.push('0x'+c.toString(16)+' '+nome+' → '+(r?hx(r.slice(2,Math.min(r.length-3,L||16))):'nessuna risposta'));return r};
   const need=async(c1,d,nome)=>{const r=await cmd(c1,d,nome);if(!r)throw new Error('La stampante non risponde ('+nome+')');return r};
   const c=nbCanvas(),W=c.width,H=c.height,px=c.getContext('2d').getImageData(0,0,W,H).data,n=Math.max(1,Math.min(99,+LB.n||1));
-  await cmd(0x1A,[1],'lettura rotolo (RFID)',0,40);await cmd(0xDC,[1],'coperchio e rotolo',0,26);
+  await cmd(0xDC,[1],'coperchio e rotolo',0,26);
   let fine=false;for(let k=1;k<=n;k++){st('Stampo '+k+' di '+n+' (modo '+(md==='b1'?'B1':'semplice')+')…');
    await need(0x21,[3],'densità');await need(0x23,[1],'tipo etichetta');
-   if(md==='b1'){await need(0x01,[0,0,1,0,0,0,0],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255,0,1],'misura')}
+   if(md==='b1'){await need(0x01,[0,1,0,0,0,0,0],'avvio (1 pagina)');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255,0,1],'misura')}
    else{await need(0x01,[1],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255],'misura')}
    for(let y=0;y<H;y++){const row=[],seg=[0,0,0];for(let xb=0;xb<W;xb+=8){let v=0;for(let i=0;i<8;i++){const o=((y*W)+xb+i)*4,bk=(px[o]*.3+px[o+1]*.59+px[o+2]*.11)<128?1:0;v=(v<<1)|bk;if(bk)seg[Math.min(2,Math.floor((xb+i)/(W/3)))]++}row.push(v)}
     if(md==='b1'&&!seg[0]&&!seg[1]&&!seg[2])await send(nbPk(0x84,[y>>8,y&255,1]));else await send(nbPk(0x85,[y>>8,y&255,...(md==='b1'?seg:[0,0,0]),1,...row]))}
