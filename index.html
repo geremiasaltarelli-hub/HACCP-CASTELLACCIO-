@@ -115,7 +115,7 @@ function add(id){
  if(miss.length&&add.w!==miss.join()){add.w=miss.join();return msg('Manca il lotto di: '+miss.join(', ')+'. Premi ancora Aggiungi per salvare comunque')}add.w='';
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
  if(id==='prod'&&!o.l)o.l=lotP(o.p,o.d);if(id==='lot'){const al=docLot(o.b,o.d);if(!o.l&&o.b){o.l=al;o.la=true}else o.la=!!al&&o.l===al}if(id==='aut'&&!o.l)o.l=((o.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+(o.d||TD).replace(/-/g,'');if(o.s)S.f=o.s;
- if(ED>=0&&S.r[id]&&S.r[id][ED]){S.r[id][ED]=Object.assign({},S.r[id][ED],o,{mod:new Date().toISOString()});ED=-1;save();msg('Modifica salvata');render();return}
+ if(ED>=0&&S.r[id]&&S.r[id][ED]){const nw=S.r[id][ED]=Object.assign({},S.r[id][ED],o,{mod:new Date().toISOString()});syncCp(id,nw);ED=-1;save();msg('Modifica salvata');render();return}
  (S.r[id]=S.r[id]||[]).push(o);if(id==='lot')DL={d:o.d,fo:o.fo,b:o.b,s:o.s};save();
  if(id==='lot'&&o.c==='NC'){pre={d:o.d,p:o.p,fo:o.fo,a:'Prodotto non conforme al ricevimento'};msg('Registrata: compila la non conformità');go('nc');return}
  msg(id==='lot'?'Registrato. Inserisci il prossimo prodotto della stessa consegna':id==='aut'?'Registrato con il lotto '+o.l:'Registrazione aggiunta');render();if(id==='lot')setTimeout(()=>{const e=$('#f_p');e&&e.focus()},60)}
@@ -229,12 +229,52 @@ function docLot(b,d){if(!b)return'';const t=String(d||TD).split('-');return b+' 
 const afs=x=>x.a?(x.ad?x.a+' del '+fmt(x.ad):x.a):(x.ad?'del '+fmt(x.ad):'');
 const auRows=()=>(S.r.aut||[]).map((x,i)=>({d:x.d,p:x.p,fo:'Produzione aziendale',b:afs(x),l:x.l,sc:x.sc,t:'',c:'',s:x.s,ex:x.ex,_au:i,_h:hasSrc(x)})).filter(x=>!x._h);
 const cnt=id=>(S.r[id]||[]).length+(id==='lot'?auRows().length:0);
+function syncCp(id,n){
+ if(id==='aut'&&n.from){const l=(S.r.lot||[]).find(x=>x.id===n.from);if(l){l.d=n.d;l.p=n.p;l.l=n.l;l.la=false;l.sc=n.sc||'';l.s=n.s||l.s||'';if(afs(n))l.b=afs(n);l.mod=n.mod}}
+ if(id==='lot'&&n.id){const a=(S.r.aut||[]).find(x=>x.from===n.id);if(a){a.d=n.d;a.p=n.p;if(!n.la)a.l=n.l;a.sc=n.sc||'';a.s=n.s||'';if(n.b&&!a.a&&!a.ad)a.a=n.b;a.mod=n.mod}}}
 const hasSrc=a=>a&&a.from&&(S.r.lot||[]).some(l=>l.id===a.from);
 function cpAut(i){const x=(S.r.lot||[])[i];if(!x)return;x.id=x.id||Date.now().toString(36)+Math.random().toString(36).slice(2,6);
  if((S.r.aut||[]).some(a=>a.from===x.id))return msg('Questo prodotto è già nel registro Aziendale');
  if(!confirm('Copiare "'+x.p+'" nel registro Aziendale? Resta anche qui, nei lotti in ingresso: viene aggiunta solo una copia tra i prodotti aziendali (quantità e origine restano vuote, le puoi aggiungere con Modifica).'))return;
  const d=x.d||TD,l=(x.la?'':x.l)||((String(x.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+d.replace(/-/g,'')),o={d,p:x.p||'',q:'',l,o:'',m:'',a:x.b||'',sc:x.sc||'',s:x.s||'',from:x.id};
  if(x.ex)o.ex=x.ex;(S.r.aut=S.r.aut||[]).push(o);save();msg('Copiato nel registro Aziendale');render()}
+const NB={sv:'e7810a71-73ae-499d-8c15-faa9aef0c3f2',ch:'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'};
+function nbSz(){try{const t=JSON.parse(localStorage.getItem('nbs')||'{}');return{w:+t.w||50,h:+t.h||30}}catch(e){return{w:50,h:30}}}
+function nbSet(k,v){const t=nbSz();t[k]=Math.max(10,Math.min(60,+v||t[k]));try{localStorage.setItem('nbs',JSON.stringify(t))}catch(e){}}
+function nbCanvas(){const x=S.r.prod[LB.i],z=nbSz(),W=Math.min(384,Math.floor(z.w)*8),H=Math.round(z.h*8),c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.fillStyle='#000';g.textBaseline='top';
+ const pad=12,maxW=W-2*pad,F='Arial,Helvetica,sans-serif';let sz=Math.min(56,Math.floor(H/3)),lines;
+ const wr=(t,s)=>{g.font='bold '+s+'px '+F;const o=[];let l='';for(const w of String(t).split(' ')){const tt=l?l+' '+w:w;if(g.measureText(tt).width<=maxW)l=tt;else{if(l)o.push(l);l=w}}o.push(l);return o};
+ for(;;){lines=wr(x.p||'Prodotto',sz);if(lines.length<=2&&lines.every(l=>g.measureText(l).width<=maxW))break;if(sz<=16)break;sz-=2}
+ let y=pad;g.font='bold '+sz+'px '+F;lines.slice(0,2).forEach(l=>{g.fillText(l,pad,y);y+=sz*1.1});
+ const s2=Math.max(16,Math.min(34,Math.floor((H-y-pad)/2.4)));g.font=s2+'px '+F;y+=6;g.fillText('Lotto: '+(x.l||''),pad,y);y+=s2*1.25;g.fillText('Data: '+fmt(x.d),pad,y);return c}
+const nbPk=(cmd,d)=>{d=d||[];let cs=cmd^d.length;d.forEach(b=>cs^=b);return Uint8Array.from([0x55,0x55,cmd,d.length,...d,cs&255,0xAA,0xAA])};
+const nbMd=()=>{try{return localStorage.getItem('nbm')||'b1'}catch(e){return'b1'}};
+function nbMode(v){try{localStorage.setItem('nbm',v)}catch(e){}lbv()}
+function nbUi(){const z=nbSz();return `<div style="margin:12px 0;padding:10px;border:1px solid var(--line);border-radius:8px"><b>Stampante Niimbot B1</b><div class="g2"><label>Larghezza rotolo (mm)<input type="number" value="${z.w}" onchange="nbSet('w',this.value);lbv()"></label><label>Altezza etichetta (mm)<input type="number" value="${z.h}" onchange="nbSet('h',this.value);lbv()"></label></div><label>Modo di stampa<select onchange="nbMode(this.value)"><option value="b1"${nbMd()==='b1'?' selected':''}>B1 (consigliato)</option><option value="old"${nbMd()==='old'?' selected':''}>Semplice (alternativo)</option></select></label><button class="b" onclick="nbPrint()">Stampa sulla Niimbot (prova)</button><button class="b o" onclick="nbImg()">Salva come immagine</button><p class="st" id="nbst" style="text-align:left;white-space:pre-wrap;font-family:monospace;font-size:12px"></p><img alt="anteprima" style="border:1px solid #888;max-width:100%" src="${nbCanvas().toDataURL()}"></div>`}
+async function nbImg(){const c=nbCanvas(),x=S.r.prod[LB.i],nm='Etichetta-'+String(x.p||'prodotto').replace(/[^\w]+/g,'-')+'-'+String(x.l||'').replace(/[^\w]+/g,'-')+'.png';c.toBlob(async b=>{const f=new File([b],nm,{type:'image/png'});try{if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:nm});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=nm;a.click()}}catch(e){if(e.name!=='AbortError')msg('Non sono riuscito a salvare l’immagine')}})}
+async function nbPrint(){
+ if(!navigator.bluetooth)return msg('Il Bluetooth del browser non c’è: apri l’app con Chrome su Android');
+ let dev;try{dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[NB.sv]})}catch(e){return msg(e.name==='NotFoundError'?'Nessuna stampante scelta':'Bluetooth: '+e.message)}
+ const lg=[],st=t=>{const e=$('#nbst');if(e)e.textContent=t+(lg.length?'\n\n'+lg.join('\n'):'')},sl=t=>new Promise(r=>setTimeout(r,t)),hx=a=>[...a].map(v=>v.toString(16).padStart(2,'0')).join(' '),md=nbMd();
+ try{st('Mi collego alla stampante…');
+  const sv=await(await dev.gatt.connect()).getPrimaryService(NB.sv),ch=await sv.getCharacteristic(NB.ch);let wait=null;
+  await ch.startNotifications();ch.addEventListener('characteristicvaluechanged',ev=>{const v=ev.target.value,a=new Uint8Array(v.buffer.slice(v.byteOffset,v.byteOffset+v.byteLength));if(wait)wait(a)});
+  const wr=ch.writeValueWithoutResponse?ch.writeValueWithoutResponse.bind(ch):ch.writeValue.bind(ch);
+  const send=async b=>{for(let o=0;o<b.length;o+=20)await wr(b.slice(o,o+20))};
+  const cmd=async(c,d,nome)=>{const p=new Promise(r=>{wait=r;setTimeout(()=>r(null),2500)});await send(nbPk(c,d));const r=await p;wait=null;lg.push('0x'+c.toString(16)+' '+nome+' → '+(r?hx(r.slice(2,Math.min(r.length-3,12))):'nessuna risposta'));return r};
+  const need=async(c1,d,nome)=>{const r=await cmd(c1,d,nome);if(!r)throw new Error('La stampante non risponde ('+nome+')');return r};
+  const c=nbCanvas(),W=c.width,H=c.height,px=c.getContext('2d').getImageData(0,0,W,H).data,n=Math.max(1,Math.min(99,+LB.n||1));
+  for(let k=1;k<=n;k++){st('Stampo '+k+' di '+n+' (modo '+(md==='b1'?'B1':'semplice')+')…');
+   await need(0x21,[3],'densità');await need(0x23,[1],'tipo etichetta');
+   if(md==='b1'){await need(0x01,[0,0,1,0,0,0,0],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255,0,1],'misura')}
+   else{await need(0x01,[1],'avvio');await need(0x03,[1],'pagina');await need(0x13,[H>>8,H&255,W>>8,W&255],'misura')}
+   for(let y=0;y<H;y++){const row=[],seg=[0,0,0];for(let xb=0;xb<W;xb+=8){let v=0;for(let i=0;i<8;i++){const o=((y*W)+xb+i)*4,bk=(px[o]*.3+px[o+1]*.59+px[o+2]*.11)<128?1:0;v=(v<<1)|bk;if(bk)seg[Math.min(2,Math.floor((xb+i)/(W/3)))]++}row.push(v)}
+    if(md==='b1'&&!seg[0]&&!seg[1]&&!seg[2])await send(nbPk(0x84,[y>>8,y&255,1]));else await send(nbPk(0x85,[y>>8,y&255,...(md==='b1'?seg:[0,0,0]),1,...row]))}
+   await need(0xE3,[1],'fine pagina');
+   if(md==='b1'){for(let t=0;t<30;t++){const r=await cmd(0xA3,[1],'stato');if(r&&r.length>9&&(r[4]*256+r[5])>=1&&r[6]>=100)break;await sl(200)}}
+   for(let t=0;t<40;t++){const r=await cmd(0xF3,[1],'fine stampa');if(r&&r[4]===1)break;await sl(150)}}
+  st('Inviato alla stampante: se non esce nulla, guarda il registro qui sotto.');try{dev.gatt.disconnect()}catch(e){}
+ }catch(e){st('Non è andata: '+(e&&e.message?e.message:e));try{dev.gatt.disconnect()}catch(x){}}}
 let LO={};
 function tgl(id){LO[id]=!LO[id];const w=$('#lw');if(w)w.hidden=!LO[id];const b=$('#reg');if(b)b.textContent=(LO[id]?'▼ Nascondi':'▶ Mostra')+' registrazioni ('+cnt(id)+')'}
 function openReg(id){if(!LO[id])tgl(id);$('#reg').scrollIntoView()}
