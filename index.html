@@ -111,7 +111,7 @@ const BL='______________';
 const lt=(m,x)=>x.fo==='Produzione interna'?`${m}: produzione interna del ${fmt(x.d)}, lotto ${x.l}`:x.fo==='Produzione aziendale'?`${m}: produzione aziendale, ${x.b?'autofattura '+x.b+', ':''}lotto ${x.l||BL}`:x.la?`${m}: ${x.fo}, doc. ${x.b} (senza lotto del fornitore)`:`${m}: ${x.fo}, doc. ${x.b||BL}, lotto ${x.l||BL}`;
 function pick(k,el){const x=el.value?gl(el.value):null;if(!x)return;$('#f_'+k).value=x.fo==='Produzione aziendale'?`Produzione aziendale – Lotto: ${x.l}`:`Ditta: ${x.fo} – Fatt. n. ${x.b} – Lotto fornitore: ${x.l}`}
 function pickp(k,el){const x=el.value?gl(el.value):null;if(!x)return;const j=(o,t)=>o.value=o.value?o.value+'; '+t:t;j($('#f_i'),x.p);j($('#f_e'),lt(x.p,x));el.value=''}
-function ex(id,i){const x=S.r[id][i];x.ex=x.ex?'':1;save();render()}
+function ex(id,i){const x=S.r[id][i];x.ex=x.ex?'':1;if(id==='aut'&&x.from){const l=(S.r.lot||[]).find(y=>y.id===x.from);if(l)l.ex=x.ex}if(id==='lot'&&x.id){const a=(S.r.aut||[]).find(y=>y.from===x.id);if(a)a.ex=x.ex}save();render()}
 function add(id){
  const r=R.find(x=>x.id===id),o={};r.f.forEach(([k])=>o[k]=$('#f_'+k).value.trim());if(id==='abb'){o.nv=$('#f_nv').value.trim();o.cv=$('#f_cv').value;o.gg=$('#f_gg').value.trim();o.lp=$('#f_lp').value.trim()}if(id==='aut')o.ad=$('#f_ad').value;if(id==='lot'&&o.fo)o.fo=canonFo(o.fo);if((id==='lot'||id==='aut')&&$('#f_na')&&$('#f_na').checked)o.sc='NA';
  const miss=[...document.querySelectorAll('#rcl .ing')].filter(r=>r.querySelector('input').value.trim()&&(!r.querySelector('select').value||(r.querySelector('select').value==='x'&&!r.querySelector('.mn').value.trim()))).map(r=>r.querySelector('input').value.trim());
@@ -119,13 +119,14 @@ function add(id){
  if(r.f.every(([k,l,t])=>t==='d'||t==='c'||!o[k]))return msg('Compila almeno un campo');
  if(id==='prod'&&!o.l)o.l=lotP(o.p,o.d);if(id==='lot'){const al=docLot(o.b,o.d);if(!o.l&&o.b){o.l=al;o.la=true}else o.la=!!al&&o.l===al}if(id==='aut'&&!o.l)o.l=((o.p||'AUT').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'AUT')+'-'+(o.d||TD).replace(/-/g,'');if(o.s)S.f=o.s;
  if(ED>=0&&S.r[id]&&S.r[id][ED]){const nw=S.r[id][ED]=Object.assign({},S.r[id][ED],o,{mod:new Date().toISOString()});syncCp(id,nw);ED=-1;save();msg('Modifica salvata');render();return}
+ if(id==='aut'){const lid=Date.now().toString(36)+Math.random().toString(36).slice(2,6);o.from=lid;(S.r.lot=S.r.lot||[]).push({id:lid,auto:true,d:o.d,p:o.p,fo:'Produzione aziendale',b:afs(o),l:o.l,sc:o.sc||'',t:'',c:'C',s:o.s||''})}
  (S.r[id]=S.r[id]||[]).push(o);if(id==='lot')DL={d:o.d,fo:o.fo,b:o.b,s:o.s};save();
  if(id==='lot'&&o.c==='NC'){pre={d:o.d,p:o.p,fo:o.fo,a:'Prodotto non conforme al ricevimento'};msg('Registrata: compila la non conformità');go('nc');return}
- msg(id==='lot'?'Registrato. Inserisci il prossimo prodotto della stessa consegna':id==='aut'?'Registrato con il lotto '+o.l:'Registrazione aggiunta');render();if(id==='lot')setTimeout(()=>{const e=$('#f_p');e&&e.focus()},60)}
+ msg(id==='lot'?'Registrato. Inserisci il prossimo prodotto della stessa consegna':id==='aut'?'Registrato con il lotto '+o.l+' (aggiunto anche ai lotti in ingresso)':'Registrazione aggiunta');render();if(id==='lot')setTimeout(()=>{const e=$('#f_p');e&&e.focus()},60)}
 function sameDel(i){const x=S.r.lot[i];DL={d:x.d,fo:x.fo,b:x.b,s:x.s};render();scrollTo(0,0)}
 function dt(b){const d=b.closest('.it').querySelector('.dtl');d.hidden=!d.hidden}
 function ed(i){ED=i;render();scrollTo(0,0)}
-function del(id,i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}S.r[id].splice(i,1);save();render()}
+function del(id,i,b){if(!b.dataset.a){b.dataset.a=1;b.textContent='Conferma?';setTimeout(()=>{b.dataset.a='';b.textContent='Elimina'},3000);return}const x=S.r[id][i];if(id==='aut'&&x.from){const j=(S.r.lot||[]).findIndex(y=>y.id===x.from&&y.auto);if(j>=0)S.r.lot.splice(j,1)}if(id==='lot'&&x.id&&x.auto){const j=(S.r.aut||[]).findIndex(y=>y.from===x.id);if(j>=0)S.r.aut.splice(j,1)}S.r[id].splice(i,1);save();render()}
 function gridView(r){
  const dim=new Date(V.m.slice(0,4),V.m.slice(5),0).getDate();if(+V.d>dim)V.d=pad(dim);
  const o=rec(),days=Array.from({length:dim},(_,i)=>`<option ${pad(i+1)===V.d?'selected':''}>${pad(i+1)}`).join('');
