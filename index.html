@@ -363,7 +363,7 @@ async function dl(id){
  try{const d=await claude.use('downloads');if(!d)throw 0;await d.save({filename:`Castellaccio-${r.doc?'DOC'+r.doc:r.id}${r.k==='g'?'-'+V.m:''}.html`,data:`<!doctype html><meta charset="utf-8"><title>${E(r.t)}</title><style>${PCSS}@page{size:A4 ${s.o};margin:8mm}body{margin:0}</style>${s.h}`});msg('Apri il file e stampa dal browser')}
  catch(e){msg('Download non disponibile qui')}}
 let AFM='',AFDT='';
-const afD=()=>{let t={};try{t=JSON.parse(localStorage.getItem('afd')||'{}')}catch(e){}return Object.assign({n:'Az. Agr. "IL CASTELLACCIO" di Guido Christian',ind:'Strada Prov.le 84 Nuova Sangrina, 67036 Rivisondoli (AQ)',piva:'01406240661',cf:'GDUCRS75T25H434L',cau:'Autofattura mensile per produzione aziendale'},t)};
+const afD=()=>{let t={};try{if(localStorage.getItem('afv')!=='2'){localStorage.removeItem('afd');localStorage.setItem('afv','2')}t=JSON.parse(localStorage.getItem('afd')||'{}')}catch(e){}return Object.assign({n:'Az. Agr. "IL CASTELLACCIO" di Guido Christian',ind:'Strada Prov.le 84 Nuova Sangrina, 67036 Rivisondoli (AQ)',piva:'01406240661',cf:'GDUCRS75T25H434L',cau:'Autofattura mensile per produzione aziendale'},t)};
 function afSet(k,v){const t=afD();t[k]=v;try{localStorage.setItem('afd',JSON.stringify(t))}catch(e){}}
 const afN=v=>{const n=parseFloat(String(v??'').replace(',','.'));return isNaN(n)?null:n};
 const afE=n=>n===null||n===undefined?'':n.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
