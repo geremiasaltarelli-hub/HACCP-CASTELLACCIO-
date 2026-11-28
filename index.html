@@ -64,6 +64,7 @@ let S={r:{},g:{},f:''},ref=null,V={id:null,m:TD.slice(0,7),d:TD.slice(8)},pre={}
 const LS='haccp-castellaccio';
 function save(){try{localStorage.setItem(LS,JSON.stringify({f:S.f}))}catch(e){}window.push&&push()}
 function msg(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(()=>m.style.display='none',2500)}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 function boot(){let f='';try{f=JSON.parse(localStorage.getItem(LS)||'{}').f||''}catch(e){}S={r:{},g:{},f,rc:[]};$('#app').innerHTML='<p class="st">Caricamento…</p>';setTimeout(()=>{const p=$('#spl');if(p){p.style.opacity=0;setTimeout(()=>p.remove(),500)}},1600)}
 let ED=-1,DL=null;function go(id){ED=-1;V.id=id;render();scrollTo(0,0)}
 function render(){const sy=window.scrollY,op=[...document.querySelectorAll('#lst details.gr[open]')].map(d=>d.dataset.k);render0();if(op.length)[...document.querySelectorAll('#lst details.gr')].forEach(d=>{if(op.includes(d.dataset.k))d.open=true});window.scrollTo(0,sy)}
@@ -478,7 +479,6 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,onSnapshot,setDoc,deleteField} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import cfg from './firebase-config.js';
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 const app=initializeApp(cfg),auth=getAuth(app),db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
 const cl=o=>JSON.parse(JSON.stringify(o)),uid=()=>Date.now().toString(36).padStart(9,'0')+Math.random().toString(36).slice(2,5);
 let P={r:{},g:{},rc:[]};
